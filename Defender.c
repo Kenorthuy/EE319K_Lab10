@@ -2,7 +2,10 @@
 // Runs on LM4F120/TM4C123
 // Evan Varghese and Ken Nguyen
 
-// Last Modified: 1/17/2020 
+// Last Modified: 1/17/2020
+
+// SOURCE CODE OF ORIGINAL GAME
+// http://tech.quarterarcade.com/tech/MAME/src/williams.c.html.aspx?g=737
 
 // GAMEPLAY OVERVIEW
 // https://www.youtube.com/watch?time_continue=50&v=PAM7_-_Ycxw&feature=emb_title
