@@ -5,7 +5,9 @@
 // Last Modified: 1/17/2020 
 
 // GAMEPLAY OVERVIEW
+// https://www.youtube.com/watch?time_continue=50&v=PAM7_-_Ycxw&feature=emb_title
 // http://www.digitpress.com/dpsoundz/mp3/conquer_the_video_craze/conquer_the_video_craze_03_-_Defender.mp3
+// https://www.arcade-museum.com/game_detail.php?game_id=7547
 
 // sounds at https://seanriddle.com/willy2.html
 // 				and http://www.digitpress.com/dpsoundz/soundfx.htm
