@@ -21,6 +21,8 @@ Timers:
   
   Timer0 tracks sound output
   
+  Timer1 tracks creature interactions
+  
   Busy-Wait LCD
   
   
