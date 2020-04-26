@@ -25,16 +25,17 @@ typedef struct {
 	uint8_t ypos;
 	uint8_t width;
 	uint8_t height;
+	uint8_t pickedup;		//property unique to astronauts for tracking vertical position
+	uint8_t carrying;		//property unique to landers for moving humans out
 } creature_t;
 
 creature_t enemies[2] = {
-	{lander, 20, 20, landerw, landerh},
-	{lander, 80, 80, landerw, landerh}
+	{lander, 20, 20, landerw, landerh, 0, 0},
+	{lander, 80, 80, landerw, landerh, 0, 0}
 };
 
-creature_t humans[2] = {
-	{human, 41, 110, humanw, humanh},
-	{human, 91, 110, humanw, humanh}
+creature_t humans[1] = {
+	{human, 41, 110, humanw, humanh, 0, 0}
 };
 
 void initCreatures() {
@@ -45,15 +46,24 @@ void spawnLander() {
 }
 
 void landerMove(uint8_t index) {
-	if(humans[index].xpos + humans[index].width/2 < enemies[index].xpos + enemies[index].width/2) {				//try to get the center of the lander to align with the center of the human
-		(enemies[index].xpos)--;
+	if(humans[0].pickedup != 1) {
+		if(humans[0].xpos + humans[0].width/2 < enemies[index].xpos + enemies[index].width/2) {				//try to get the center of the lander to align with the center of the human
+			(enemies[index].xpos)--;
+		}
+		if(humans[0].xpos + humans[0].width/2 > enemies[index].xpos + enemies[index].width/2) {
+			(enemies[index].xpos)++;;
+		}
+		if(humans[0].xpos + humans[0].width/2 == enemies[index].xpos + enemies[index].width/2 && humans[0].ypos > enemies[index].ypos+humanh-3) {	//if theyre aligned, start going down
+			(enemies[index].ypos)++;
+		}
 	}
-	if(humans[index].xpos + humans[index].width/2 > enemies[index].xpos + enemies[index].width/2) {
-		(enemies[index].xpos)++;;
+	if(((humans[0].pickedup == 0 && enemies[index].carrying == 0) || (humans[0].pickedup == 1 && enemies[index].carrying == 1)) 
+		&& humans[0].xpos + humans[0].width/2 == enemies[index].xpos + enemies[index].width/2 && humans[0].ypos <= enemies[index].ypos+humanh-3) {	//if theyre aligned, start going down
+		(humans[0].pickedup) = 1;
+		(enemies[index].carrying) = 1;									//if the ship with a carrying flag is destroyed, the human falls (ypos increases by 2) and should die if he hits the ground—but that needs to be a function of height
+		(enemies[index].ypos)--;
 	}
-	if(humans[index].xpos + humans[index].width/2 == enemies[index].xpos + enemies[index].width/2 && humans[index].ypos > enemies[index].height+humanh) {	//if theyre aligned, start going down
-		(enemies[index].ypos)++;
-	}
+	//there should also be commands for attacking the player if the human is picked up
 }
 
 void enemyMove() {										//this calls all the enemies to move in their certain way
@@ -61,6 +71,9 @@ void enemyMove() {										//this calls all the enemies to move in their certai
 		if(enemies[i].type == lander) {
 			landerMove(i);
 		}
+	}
+	if(humans[0].pickedup == 1) {				//if the human is picked up, decrease his y position to show he's going up
+		humans[0].ypos--;
 	}
 }
 
