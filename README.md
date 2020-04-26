@@ -29,7 +29,7 @@ Timers:
  Gameplay:
   static background
   
-  2 humans. stand still
+  1 human. panics and runs around
   
   2 enemies
   
