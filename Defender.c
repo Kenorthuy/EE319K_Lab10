@@ -77,69 +77,49 @@
 
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
+void drawCreatures(void);
 void Delay100ms(uint32_t count); // time delay in 0.1 seconds
-
-typedef enum {dead,alive} status_t;
-struct sprite {
-  int32_t x;      // x coordinate
-  int32_t y;      // y coordinate
-  int32_t vx,vy;  // pixels/30Hz
-  const unsigned short *image; // ptr->image
-  const unsigned short *black;
-  status_t life;        // dead/alive
-  int32_t w; // width
-  int32_t h; // height
-  uint32_t needDraw; // true if need to draw
-};
-typedef struct sprite sprite_t;
-
-
-struct laser {
-	int32_t x;
-	int32_t y;
-	int32_t vx,vy;
-	const unsigned short *image;
-	int32_t w;
-	int32_t h;
-};
-typedef struct laser laser_t;
-
 
 int main(void){
   DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
   Random_Init(1);
+	
+	initCreatures();
 
   Output_Init();
   ST7735_FillScreen(0x0000);            // set screen to black
-  
-  ST7735_DrawBitmap(22, 159, PlayerShip0, 18,8); // player ship bottom
-  ST7735_DrawBitmap(53, 151, Bunker0, 18,5);
-  ST7735_DrawBitmap(42, 159, PlayerShip1, 18,8); // player ship bottom
-  ST7735_DrawBitmap(62, 159, PlayerShip2, 18,8); // player ship bottom
-  ST7735_DrawBitmap(82, 159, PlayerShip3, 18,8); // player ship bottom
 
-  ST7735_DrawBitmap(0, 9, SmallEnemy10pointA, 16,10);
-  ST7735_DrawBitmap(20,9, SmallEnemy10pointB, 16,10);
-  ST7735_DrawBitmap(40, 9, SmallEnemy20pointA, 16,10);
-  ST7735_DrawBitmap(60, 9, SmallEnemy20pointB, 16,10);
-  ST7735_DrawBitmap(80, 9, SmallEnemy30pointA, 16,10);
-  ST7735_DrawBitmap(100, 9, SmallEnemy30pointB, 16,10);
+	//ST7735_DrawBitmap(1, 110, landerSprite, 13,12);
+	//ST7735_DrawBitmap(21, 110, mutantSprite, 13,12);
+  //ST7735_DrawBitmap(41, 110, humanSprite, 7,12);
+	ST7735_DrawBitmap(91, 110, humanSprite, 7,12);
+	ST7735_DrawFastHLine(1, 100, 128, 0xAB44);
 
   Delay100ms(50);              // delay 5 sec at 80 MHz
-
-  ST7735_FillScreen(0x0000);   // set screen to black
-  ST7735_SetCursor(1, 1);
-  ST7735_OutString("GAME OVER");
-  ST7735_SetCursor(1, 2);
-  ST7735_OutString("Nice try,");
-  ST7735_SetCursor(1, 3);
-  ST7735_OutString("Earthling!");
-  ST7735_SetCursor(2, 4);
-  LCD_OutDec(1234);
+	
   while(1){
+		Delay100ms(2);
+		ST7735_DrawFastHLine(1, 100, 128, 0xAB44);			//re-renders the background
+		enemyMove();																		//move enemies
+		drawCreatures();																//use updated coordinates to draw people
   }
 
+}
+
+void drawCreatures() {
+	for(int i = 0; i < 2; i++) {											//only supports array maximums of two and landers
+		if(enemies[i].type == 1) {
+			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, landerSprite, enemies[i].width, enemies[i].height);
+		}
+	}
+	for(int i = 0; i < 2; i++) {
+		ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
+	}
+}
+
+void Systick_Handler() {
+	//write this later. use a mailbox to check inputs. i think Timer1 should connect to enemies so that everything has a reasonable scope
 }
 
 
