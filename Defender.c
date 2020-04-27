@@ -61,18 +61,45 @@
 #include "Timer1.h"
 #include "Creatures.h"
 #include "Images.h"
+#include "SysTick.h"
 
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
 void drawCreatures(void);
 void Delay100ms(uint32_t count); // time delay in 0.1 seconds
+void Input_Init(void);
+void LED_Init(void);
+
+// *************** LED_Init **********************************************
+void LED_Init(void){ volatile uint32_t delay;
+  GPIO_PORTF_LOCK_R = 0x4C4F434B;   // 2) unlock GPIO Port F
+  GPIO_PORTF_CR_R |= 0x07;           // allow changes to PF4-0
+  // only PF0 needs to be unlocked, other bits can't be locked
+  GPIO_PORTF_AMSEL_R = 0x00;        // 3) disable analog on PF
+  GPIO_PORTF_PCTL_R = 0x00000000;   // 4) PCTL GPIO on PF4-0
+  GPIO_PORTF_DIR_R |= 0x07;          // 5) PF4,PF0 in, PF3-1 out
+  GPIO_PORTF_AFSEL_R = 0x00;        // 6) disable alt funct on PF7-0
+  GPIO_PORTF_DEN_R |= 0x07;          // 7) enable digital I/O on PF4-0
+}
+
+// *************** Input_Init *****************************************
+void Input_Init(void){volatile int delay;
+	SYSCTL_RCGCGPIO_R |= 0x3B;
+	delay = SYSCTL_RCGCGPIO_R;
+	ADC_Init();
+	LED_Init();
+	
+}
 
 int main(void){
   DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
   Random_Init(1);
+	SysTick_Init();
+	Input_Init();
 	
-	ADC_Init();
+	Timer1_Init(1454480);
+	//ADC_Init();
 	
 
   Output_Init();
@@ -84,29 +111,43 @@ int main(void){
 	ST7735_DrawFastHLine(1, 100, 128, 0xAB44);
 
   Delay100ms(50);              // delay 5 sec at 80 MHz
+	EnableInterrupts();
 	
   while(1){
-		Delay100ms(2);
 		ST7735_DrawFastHLine(1, 100, 128, 0xAB44);			//re-renders the background
-		enemyMove();																		//move enemies
-		drawCreatures();																//use updated coordinates to draw people
+		if(enemyflag) {
+			enemyflag = 0;
+			enemyMove();																	//move enemies
+			drawCreatures();															//use updated coordinates to draw creatures
+		}
   }
 
 }
 
 void drawCreatures() {
 	for(int i = 0; i < 1; i++) {
-		ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
+		if(humans[i].dead == 0) {
+			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
+		}
 	}
 	for(int i = 0; i < 2; i++) {											//only supports array maximums of two and landers
-		if(enemies[i].type == 1) {
+		if(enemies[i].type == 1 && enemies[i].dead == 0) {
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, landerSprite, enemies[i].width, enemies[i].height);
 		}
 	}
-}
-
-void Systick_Handler() {
-	//write this later. use a mailbox to check inputs. i think Timer1 should connect to enemies so that everything has a reasonable scope
+	for(int i = 0; i < 5; i++) {											//only supports array maximums of two and landers
+		if(shots[i].override == 0) {
+			ST7735_DrawBitmap(shots[i].xpos, shots[i].ypos, enemyShot, 7, 7);
+		}
+	}
+	for(int i = 0; i < 1; i++){
+		if(player[0].movingFlag == 1){
+			ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_black, player[i].width, player[i].height);
+			ST7735_DrawBitmap(player[i].xpos, convertedValue, ship_right, player[i].width, player[i].height);
+			player[0].movingFlag = 0;
+			player[0].ypos = convertedValue;
+		}
+	}
 }
 
 // You can't use this timer, it is here for starter code only 
