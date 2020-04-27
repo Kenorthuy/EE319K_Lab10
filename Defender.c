@@ -1,21 +1,12 @@
 // Defender.c
 // Runs on LM4F120/TM4C123
-// Evan Varghese and Ken Nguyen
+// Jonathan Valvano and Daniel Valvano
+// This is a starter project for the EE319K Lab 10
 
-// Last Modified: 1/17/2020
-
-// SOURCE CODE OF ORIGINAL GAME
-// http://tech.quarterarcade.com/tech/MAME/src/williams.c.html.aspx?g=737
-
-// GAMEPLAY OVERVIEW
-// https://www.youtube.com/watch?time_continue=50&v=PAM7_-_Ycxw&feature=emb_title
-// http://www.digitpress.com/dpsoundz/mp3/conquer_the_video_craze/conquer_the_video_craze_03_-_Defender.mp3
-// https://www.arcade-museum.com/game_detail.php?game_id=7547
-
-// sounds at https://seanriddle.com/willy2.html
-// 				and http://www.digitpress.com/dpsoundz/soundfx.htm
-
-
+// Last Modified: 1/17/2020 
+// http://www.spaceinvaders.de/
+// sounds at http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
+// http://www.classicgaming.cc/classics/spaceinvaders/playguide.php
 /* This example accompanies the books
    "Embedded Systems: Real Time Interfacing to Arm Cortex M Microcontrollers",
    ISBN: 978-1463590154, Jonathan Valvano, copyright (c) 2019
@@ -34,23 +25,19 @@
  For more information about my classes, my research, and my books, see
  http://users.ece.utexas.edu/~valvano/
  */
- 
-// ******* Hardware I/O connections*******************
+// ******* Possible Hardware I/O connections*******************
 // Slide pot pin 1 connected to ground
 // Slide pot pin 2 connected to PD2/AIN5
 // Slide pot pin 3 connected to +3.3V 
-// Left button connected to PE0
-// Right button connected to PE1
-// Fire Button connected to PE2
-// 32*R resistor DAC bit 0 on PB0 (least significant bit)
-// 16*R resistor DAC bit 1 on PB1
-// 8*R resistor DAC bit 2 on PB2
-// 4*R resistor DAC bit 3 on PB3
-// 2*R resistor DAC bit 4 on PB4
-// 1*R resistor DAC bit 5 on PB5 (most significant bit)
-
-// LED on PB4
-// LED on PB5
+// fire button connected to PE0
+// special weapon fire button connected to PE1
+// 8*R resistor DAC bit 0 on PB0 (least significant bit)
+// 4*R resistor DAC bit 1 on PB1
+// 2*R resistor DAC bit 2 on PB2
+// 1*R resistor DAC bit 3 on PB3 (most significant bit)
+// LED on PF0
+// LED on PF1
+// LED on PF2
 
 // Backlight (pin 10) connected to +3.3 V
 // MISO (pin 9) unconnected
@@ -70,77 +57,102 @@
 #include "Random.h"
 #include "PLL.h"
 #include "ADC.h"
-#include "Images.h"
 #include "Sound.h"
 #include "Timer0.h"
 #include "Timer1.h"
+#include "Creatures.h"
+#include "Images.h"
+#include "DAC.h"
+#include "SysTick.h"
+
 
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
+void drawCreatures(void);
 void Delay100ms(uint32_t count); // time delay in 0.1 seconds
-
-typedef enum {dead,alive} status_t;
-struct sprite {
-  int32_t x;      // x coordinate
-  int32_t y;      // y coordinate
-  int32_t vx,vy;  // pixels/30Hz
-  const unsigned short *image; // ptr->image
-  const unsigned short *black;
-  status_t life;        // dead/alive
-  int32_t w; // width
-  int32_t h; // height
-  uint32_t needDraw; // true if need to draw
-};
-typedef struct sprite sprite_t;
+void Input_Init(void);
+void LED_Init(void);
 
 
-struct laser {
-	int32_t x;
-	int32_t y;
-	int32_t vx,vy;
-	const unsigned short *image;
-	int32_t w;
-	int32_t h;
-};
-typedef struct laser laser_t;
 
 
+// *************** LED_Init **********************************************
+void LED_Init(void){ volatile uint32_t delay;
+  GPIO_PORTF_LOCK_R = 0x4C4F434B;   // 2) unlock GPIO Port F
+  GPIO_PORTF_CR_R |= 0x07;           // allow changes to PF4-0
+  // only PF0 needs to be unlocked, other bits can't be locked
+  GPIO_PORTF_AMSEL_R = 0x00;        // 3) disable analog on PF
+  GPIO_PORTF_PCTL_R = 0x00000000;   // 4) PCTL GPIO on PF4-0
+  GPIO_PORTF_DIR_R |= 0x07;          // 5) PF4,PF0 in, PF3-1 out
+  GPIO_PORTF_AFSEL_R = 0x00;        // 6) disable alt funct on PF7-0
+  GPIO_PORTF_DEN_R |= 0x07;          // 7) enable digital I/O on PF4-0
+}
+
+// *************** Input_Init *****************************************
+void Input_Init(void){volatile int delay;
+	SYSCTL_RCGCGPIO_R |= 0x3B;
+	delay = SYSCTL_RCGCGPIO_R;
+	ADC_Init();
+	DAC_Init();
+	LED_Init();
+	
+}
+
+
+
+// *************** drawCreatures *****************************************
+void drawCreatures() {
+	for(int i = 0; i < 1; i++) {
+		ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
+	}
+	for(int i = 0; i < 2; i++) {											//only supports array maximums of two and landers
+		if(enemies[i].type == 1) {
+			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, landerSprite, enemies[i].width, enemies[i].height);
+		}
+	}
+	for(int i = 0; i < 1; i++){
+		if(player[0].movingFlag == 1){
+		ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_black, player[i].width, player[i].height);
+		ST7735_DrawBitmap(player[i].xpos, convertedValue, ship_right, player[i].width, player[i].height);
+			player[0].movingFlag == 0;
+			player[0].ypos = convertedValue;
+		}
+	}
+}
+
+
+// *************** Main **********************************************
 int main(void){
   DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
   Random_Init(1);
+	SysTick_Init();
+	Input_Init();
 
   Output_Init();
   ST7735_FillScreen(0x0000);            // set screen to black
-  
-  ST7735_DrawBitmap(22, 159, PlayerShip0, 18,8); // player ship bottom
-  ST7735_DrawBitmap(53, 151, Bunker0, 18,5);
-  ST7735_DrawBitmap(42, 159, PlayerShip1, 18,8); // player ship bottom
-  ST7735_DrawBitmap(62, 159, PlayerShip2, 18,8); // player ship bottom
-  ST7735_DrawBitmap(82, 159, PlayerShip3, 18,8); // player ship bottom
 
-  ST7735_DrawBitmap(0, 9, SmallEnemy10pointA, 16,10);
-  ST7735_DrawBitmap(20,9, SmallEnemy10pointB, 16,10);
-  ST7735_DrawBitmap(40, 9, SmallEnemy20pointA, 16,10);
-  ST7735_DrawBitmap(60, 9, SmallEnemy20pointB, 16,10);
-  ST7735_DrawBitmap(80, 9, SmallEnemy30pointA, 16,10);
-  ST7735_DrawBitmap(100, 9, SmallEnemy30pointB, 16,10);
+	//ST7735_DrawBitmap(1, 110, landerSprite, 13,12);
+	//ST7735_DrawBitmap(21, 110, mutantSprite, 13,12);
+  ST7735_DrawBitmap(41, 110, humanSprite, 7,12);
+	ST7735_DrawFastHLine(1, 100, 128, 0xAB44);
 
   Delay100ms(50);              // delay 5 sec at 80 MHz
-
-  ST7735_FillScreen(0x0000);   // set screen to black
-  ST7735_SetCursor(1, 1);
-  ST7735_OutString("GAME OVER");
-  ST7735_SetCursor(1, 2);
-  ST7735_OutString("Nice try,");
-  ST7735_SetCursor(1, 3);
-  ST7735_OutString("Earthling!");
-  ST7735_SetCursor(2, 4);
-  LCD_OutDec(1234);
+	EnableInterrupts();
   while(1){
+		Delay100ms(2);
+		ST7735_DrawFastHLine(1, 100, 128, 0xAB44);			//re-renders the background
+		enemyMove();																		//move enemies
+
+		drawCreatures();															//use updated coordinates to draw people
   }
 
 }
+
+
+
+
+
 
 
 // You can't use this timer, it is here for starter code only 
