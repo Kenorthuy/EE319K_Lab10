@@ -27,13 +27,15 @@ Timers:
   
   Timer0 tracks sound output
   
+  Timer1 tracks creature interactions
+  
   Busy-Wait LCD
   
   
  Gameplay:
   static background
   
-  2 humans. stand still
+  1 human. panics and runs around
   
   2 enemies
   
