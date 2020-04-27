@@ -19,6 +19,9 @@
 #define mutanth 12
 #define mutantw 13
 
+#define playerRh 7
+#define playerRw 16
+
 typedef struct { 
   uint8_t type;
   uint8_t xpos;
@@ -28,6 +31,22 @@ typedef struct {
 	uint8_t pickedup;		//property unique to astronauts for tracking vertical position
 	uint8_t carrying;		//property unique to landers for moving humans out
 } creature_t;
+
+typedef struct{
+	uint8_t xpos;
+	uint8_t ypos;
+	uint8_t xvel;
+	uint8_t yvel;
+	uint8_t width;
+	uint8_t height;
+	uint8_t lives;
+	uint8_t movingFlag;
+	uint8_t direction; //0 is right, 1 is left
+} player_t;
+
+player_t player[1] ={
+	{10, 10, 0, 0, playerRw, playerRh, 3, 0, 0}
+};
 
 creature_t enemies[2] = {
 	{lander, 20, 20, landerw, landerh, 0, 0},
@@ -76,5 +95,3 @@ void enemyMove() {										//this calls all the enemies to move in their certai
 		humans[0].ypos--;
 	}
 }
-
-

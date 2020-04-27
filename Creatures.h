@@ -15,6 +15,21 @@ typedef struct {
 	uint8_t carrying;		//property unique to landers for moving humans out
 } creature_t;
 
+
+typedef struct{
+	uint8_t xpos;
+	uint8_t ypos;
+	uint8_t xvel;
+	uint8_t yvel;
+	uint8_t width;
+	uint8_t height;
+	uint8_t lives;
+	uint8_t movingFlag;
+	uint8_t direction; //0 is right, 1 is left
+} player_t;
+
 extern creature_t enemies[2];
 
 extern creature_t humans[1];
+
+extern player_t player[1];
