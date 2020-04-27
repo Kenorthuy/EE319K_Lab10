@@ -35,6 +35,7 @@
 // 4*R resistor DAC bit 1 on PB1
 // 2*R resistor DAC bit 2 on PB2
 // 1*R resistor DAC bit 3 on PB3 (most significant bit)
+
 // LED on PF0
 // LED on PF1
 // LED on PF2
@@ -64,7 +65,6 @@
 #include "Images.h"
 #include "DAC.h"
 #include "SysTick.h"
-
 
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
@@ -97,8 +97,6 @@ void Input_Init(void){volatile int delay;
 	LED_Init();
 	
 }
-
-
 
 // *************** drawCreatures *****************************************
 void drawCreatures() {
@@ -143,12 +141,25 @@ int main(void){
 		Delay100ms(2);
 		ST7735_DrawFastHLine(1, 100, 128, 0xAB44);			//re-renders the background
 		enemyMove();																		//move enemies
-
 		drawCreatures();															//use updated coordinates to draw people
   }
 
 }
 
+void drawCreatures() {
+	for(int i = 0; i < 1; i++) {
+		ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
+	}
+	for(int i = 0; i < 2; i++) {											//only supports array maximums of two and landers
+		if(enemies[i].type == 1) {
+			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, landerSprite, enemies[i].width, enemies[i].height);
+		}
+	}
+}
+
+void Systick_Handler() {
+	//write this later. use a mailbox to check inputs. i think Timer1 should connect to enemies so that everything has a reasonable scope
+}
 
 
 

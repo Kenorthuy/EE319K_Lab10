@@ -79,7 +79,7 @@ void landerMove(uint8_t index) {
 	if(((humans[0].pickedup == 0 && enemies[index].carrying == 0) || (humans[0].pickedup == 1 && enemies[index].carrying == 1)) 
 		&& humans[0].xpos + humans[0].width/2 == enemies[index].xpos + enemies[index].width/2 && humans[0].ypos <= enemies[index].ypos+humanh-3) {	//if theyre aligned, start going down
 		(humans[0].pickedup) = 1;
-		(enemies[index].carrying) = 1;									//if the ship with a carrying flag is destroyed, the human falls (ypos increases by 2) and should die if he hits the ground—but that needs to be a function of height
+		(enemies[index].carrying) = 1;									//if the ship with a carrying flag is destroyed, the human falls (ypos increases by 2) and should die if he hits the groundï¿½but that needs to be a function of height
 		(enemies[index].ypos)--;
 	}
 	//there should also be commands for attacking the player if the human is picked up
@@ -95,4 +95,3 @@ void enemyMove() {										//this calls all the enemies to move in their certai
 		humans[0].ypos--;
 	}
 }
-

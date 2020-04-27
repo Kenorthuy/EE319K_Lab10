@@ -1,4 +1,3 @@
-#ifndef CREATURES_H
 #include <stdint.h>
 
 void initCreatures(void);
@@ -34,4 +33,3 @@ extern creature_t enemies[2];
 extern creature_t humans[1];
 
 extern player_t player[1];
-#endif
