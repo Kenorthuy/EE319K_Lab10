@@ -26,6 +26,7 @@
 #define screenH 128
 #define screenW 128
 
+//this structure keeps track of all non-player creature properties. if a creature does not use a certain value, it wont be checked but its best to leave it at zero to avoid confusion
 typedef struct { 
   uint8_t type;
   int16_t xpos;
@@ -39,6 +40,7 @@ typedef struct {
 } creature_t;
 uint8_t fullEnemy = 0;
 
+//this structure keeps track of player information
 typedef struct{
 	uint8_t xpos;
 	uint8_t ypos;
@@ -50,7 +52,9 @@ typedef struct{
 	uint8_t movingFlag;
 	uint8_t direction; //0 is right, 1 is left
 } player_t;
+uint8_t gameDone = 0;			//this flag stores whether the player is dead
 
+//this structure keeps track of projectile information
 typedef struct{
 	int16_t xpos;
 	int16_t ypos;
@@ -73,30 +77,30 @@ creature_t humans[1] = {
 	{human, 41, 110, humanw, humanh, 0, 0, 0, 0}
 };
 
-ball_t shots[5] = {											//a maximum of three balls on screen at once
-	{0, 0, 0, 0, 1},
+ball_t shots[5] = {											//a maximum of five balls on screen at once
+	{0, 0, 0, 0, 1},											//every value is initialized with 1 in the override field to show that the balls dont exist
 	{0, 0, 0, 0, 1},
 	{0, 0, 0, 0, 1},
 	{0, 0, 0, 0, 1},
 	{0, 0, 0, 0, 1}
 };
 
-void initCreatures(void);
-void spawnLander(void);
 void landerMove(uint8_t);
 void humanMove(void);
 void spawnShot(uint8_t, uint8_t, uint8_t);
 void moveShot(uint8_t);
+void checkHit(uint8_t);
+void enemyMove(void);
 
-void initCreatures() {
-}
-
-void spawnLander() {
-	//this will probably have to be done in main
-}
-
+// *************** landerMove *******************************************
+// If a human exists on the screen and isn't picked up, the lander should try to reach and pick it up in a predictable manner
+// If a lander is carrying a human to the top of the screen, that should be their sole focus
+// If another lander is carrying the human or if there is no human this round, landers should move away and attack from a distance (not implemented)
+// Landers can fire in 8 directions depending on what is closest to the player
+// Input: Index Position of the Enemy
+// Output: None
 void landerMove(uint8_t index) {
-	if(humans[0].pickedup != 1) {
+	if(humans[0].pickedup != 1) {																																		//if the human can be picked up
 		if(humans[0].xpos + humans[0].width/2 < enemies[index].xpos + enemies[index].width/2) {				//try to get the center of the lander to align with the center of the human
 			(enemies[index].xpos)--;
 		}
@@ -106,23 +110,23 @@ void landerMove(uint8_t index) {
 		if(humans[0].xpos + humans[0].width/2 == enemies[index].xpos + enemies[index].width/2 && humans[0].ypos > enemies[index].ypos+humanh-3) {	//if theyre aligned, start going down
 			(enemies[index].ypos)++;
 		}
-	}
+	}																																																//if the human is picked up by the lander OR if the human isnt picked up and the lander can get him
 	if(((humans[0].pickedup == 0 && enemies[index].carrying == 0) || (humans[0].pickedup == 1 && enemies[index].carrying == 1)) 
 		&& humans[0].xpos + humans[0].width/2 == enemies[index].xpos + enemies[index].width/2 && humans[0].ypos <= enemies[index].ypos+humanh-3) {	//if theyre aligned, start going down
 		(humans[0].pickedup) = 1;
-		(enemies[index].carrying) = 1;									//if the ship with a carrying flag is destroyed, the human falls (ypos increases by 2) and should die if he hits the ground—but that needs to be a function of height
+		(enemies[index].carrying) = 1;									//if the ship with a carrying flag is destroyed, the human falls (ypos increases by 2) and should die if he hits the ground
 		(enemies[index].ypos)--;
 	}
 	
-	if(enemies[index].carrying == 1 && enemies[index].ypos + humanh - 3 <= 0) {
+	if(enemies[index].carrying == 1 && enemies[index].ypos + humanh - 3 <= 0) {											//if the human is carried off it and the lander are technically dead
 		humans[0].dead = 1;
 		enemies[index].dead = 1;
 	}
-	if(((Random())%20+1) == 20 && fullShot == 0) {
+	if(((Random())%20+1) == 20 && fullShot == 0) {																									//the lander can decide randomly to shoot in the players general direction
 		uint8_t xway = 0;
 		uint8_t yway = 0;
 		shots[index].yvel = 0;
-		if(enemies[index].xpos > player[0].xpos) {
+		if(enemies[index].xpos > player[0].xpos) {																										//the lander picks a direction for projectile velocity here
 			xway = 1;
 		}
 		if(enemies[index].xpos < player[0].xpos) {
@@ -138,6 +142,10 @@ void landerMove(uint8_t index) {
 	}
 }
 
+// *************** humanMove ********************************************
+// The human runs around the x direction in a panic unless hes picked up or drops
+// Input: None
+// Output: None
 void humanMove(void) {
 	if(humans[0].pickedup == 0 && humans[0].ypos < 110) {
 		if(humans[0].ypos < 90) {
@@ -164,6 +172,10 @@ void humanMove(void) {
 	}
 }
 
+// *************** spawnShot ********************************************
+// This creates a shot object that is given the position of the enemy and the appropriate x and y velocities. it also clears the override flag, which makes it drawable
+// Input: x = x velocity; y = y velocity; index = index position of the enemy in enemies[]
+// Output: None
 void spawnShot(uint8_t x, uint8_t y, uint8_t index) {
 	uint8_t spot;
 	for(int i = 0; i < 3; i++) {
@@ -178,7 +190,12 @@ void spawnShot(uint8_t x, uint8_t y, uint8_t index) {
 	shots[spot].override = 0;
 }
 
+// *************** moveShot *********************************************
+// Updates shot position according to velocity information. If the shot hits the edge of the screen, it is no longer drawn
+// Input: Index position of the shot within shots[]
+// Output: None
 void moveShot(uint8_t index) {
+	checkHit(index);
 	if(shots[index].xvel == 2) {
 		shots[index].xpos += 2;
 	}
@@ -192,27 +209,46 @@ void moveShot(uint8_t index) {
 		shots[index].ypos += 2;
 	}
 	if(shots[index].xpos >= screenW || shots[index].ypos >= screenH || shots[index].xpos <= -7 || shots[index].ypos <= -7) {
-		shots[index].override = 1;
+		shots[index].override = 1;						//set override if the projectile hits any screen edges
 	}
 }
 
+// *************** checkHit *********************************************
+// compares shot position information to player position information. if the x and y information align, a life is taken and a small animation should play. 
+// if the player has no lives, immediately raise the game over flag
+// Input: Index position of the shot within shots[]
+// Output: None
+void checkHit(uint8_t thisShot) {
+	if(shots[thisShot].xpos >= player[0].xpos && shots[thisShot].xpos <= player[0].xpos + playerRw - 4 && shots[thisShot].ypos >= player[0].ypos && shots[thisShot].ypos <= player[0].ypos + playerRh-4) {
+		player[0].lives--;								//the player does not exist
+		shots[thisShot].override = 1;			//the shot does not exist
+	}
+	if(player[0].lives == 0) {
+		gameDone = 1;
+	}
+}
+
+// *************** enemyMove ********************************************
+// moves enemies, humans, and projectiles in their proper way
+// Input: None
+// Output: None
 void enemyMove() {										//this calls all the enemies to move in their certain way
 	fullShot = 1;
 	for(int i = 0; i < 5; i++) {
-		if(shots[i].override == 1) {
+		if(shots[i].override == 1) {			//fullShot is how enemies are aware if there are too many projectiles on screen
 			fullShot = 0;
 		}
-		if(shots[i].override == 0) {
+		if(shots[i].override == 0) {			//if a shot exists, it should be moved until it doesnt
 			moveShot(i);
 		}
 	}
 	for(int i = 0; i < 4; i++) {
 		if(enemies[i].type == lander && enemies[i].dead == 0) {
-			landerMove(i);
+			landerMove(i);									//a non-dead enemy should move
 		}
 	}
 	if(humans[0].dead == 0) {
-		humanMove();
+		humanMove();											//a non-dead human should move
 	}
 }
 

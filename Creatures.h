@@ -1,9 +1,11 @@
 #include <stdint.h>
 
-void initCreatures(void);
-void spawnLander(void);
+void landerMove(uint8_t);
+void humanMove(void);
+void spawnShot(uint8_t, uint8_t, uint8_t);
+void moveShot(uint8_t);
+void checkHit(uint8_t);
 void enemyMove(void);
-void landerMove(uint8_t index);
 
 typedef struct { 
   uint8_t type;
@@ -36,6 +38,8 @@ typedef struct{
 	uint8_t yvel;
 	uint8_t override;
 } ball_t;
+
+extern uint8_t gameDone;
 
 extern creature_t enemies[2];
 
