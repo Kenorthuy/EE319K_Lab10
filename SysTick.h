@@ -7,7 +7,8 @@
 // ************** Global Variables ******************
 // preferably semaphores
 extern uint8_t playerPotFlag;
-extern uint8_t convertedValue;
+extern uint8_t newYPos;
+extern uint8_t newXPos;
 
 // **************SysTick_Init*********************
 

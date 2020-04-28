@@ -42,15 +42,15 @@ uint8_t fullEnemy = 0;
 
 //this structure keeps track of player information
 typedef struct{
-	uint8_t xpos;
-	uint8_t ypos;
+	uint8_t xpos, ypos;
+	uint8_t newxpos, newypos;
 	uint8_t xvel;
-	uint8_t yvel;
 	uint8_t width;
 	uint8_t height;
 	uint8_t lives;
 	uint8_t movingFlag;
-	uint8_t direction; //0 is right, 1 is left
+	uint8_t facingLeft; //0 is right, 1 is left
+	uint8_t thrust;
 } player_t;
 uint8_t gameDone = 0;			//this flag stores whether the player is dead
 

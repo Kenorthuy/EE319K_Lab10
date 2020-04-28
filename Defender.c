@@ -1,12 +1,20 @@
 // Defender.c
 // Runs on LM4F120/TM4C123
-// Jonathan Valvano and Daniel Valvano
-// This is a starter project for the EE319K Lab 10
+// Evan Varghese and Ken Nguyen
 
-// Last Modified: 1/17/2020 
-// http://www.spaceinvaders.de/
-// sounds at http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
-// http://www.classicgaming.cc/classics/spaceinvaders/playguide.php
+// Last Modified: 1/17/2020
+
+// SOURCE CODE OF ORIGINAL GAME
+// http://tech.quarterarcade.com/tech/MAME/src/williams.c.html.aspx?g=737
+
+// GAMEPLAY OVERVIEW
+// https://www.youtube.com/watch?time_continue=50&v=PAM7_-_Ycxw&feature=emb_title
+// http://www.digitpress.com/dpsoundz/mp3/conquer_the_video_craze/conquer_the_video_craze_03_-_Defender.mp3
+// https://www.arcade-museum.com/game_detail.php?game_id=7547
+
+// sounds at https://seanriddle.com/willy2.html
+// 				and http://www.digitpress.com/dpsoundz/soundfx.htm
+
 /* This example accompanies the books
    "Embedded Systems: Real Time Interfacing to Arm Cortex M Microcontrollers",
    ISBN: 978-1463590154, Jonathan Valvano, copyright (c) 2019
@@ -26,17 +34,16 @@
  http://users.ece.utexas.edu/~valvano/
  */
 // ******* Possible Hardware I/O connections*******************
-// Slide pot pin 1 connected to ground
-// Slide pot pin 2 connected to PD2/AIN5
-// Slide pot pin 3 connected to +3.3V 
-// fire button connected to PE0
-// special weapon fire button connected to PE1
-// 8*R resistor DAC bit 0 on PB0 (least significant bit)
-// 4*R resistor DAC bit 1 on PB1
-// 2*R resistor DAC bit 2 on PB2
-// 1*R resistor DAC bit 3 on PB3 (most significant bit)
-// LED on PB4
-// LED on PB5
+// Left button connected to PE0
+// Right button connected to PE1
+// Fire Button connected to PE2
+// 32*R resistor DAC bit 0 on PB0 (least significant bit)
+// 16*R resistor DAC bit 1 on PB1
+// 8*R resistor DAC bit 2 on PB2
+// 4*R resistor DAC bit 3 on PB3
+// 2*R resistor DAC bit 4 on PB4
+// 1*R resistor DAC bit 5 on PB5 (most significant bit)
+
 
 // Backlight (pin 10) connected to +3.3 V
 // MISO (pin 9) unconnected
@@ -69,9 +76,38 @@ void drawCreatures(void);
 void Delay100ms(uint32_t count); // time delay in 0.1 seconds
 void Input_Init(void);
 void LED_Init(void);
+void Button_Init(void);
+void Intro_Screen(void);
+void Level_One(void);
+
+
+// ************** Intro_Screen *****************************************
+void Intro_Screen(void){
+	ST7735_DrawBitmap(3, 80, title, 122, 26);
+	ST7735_SetCursor(1,10);
+	ST7735_SetTextColor(0xFFFF);
+	ST7735_OutString("  Press any button\n     to continue.");
+	while(GPIO_PORTE_DATA_R == 0);
+}
+
+// ***************** Level_One *****************************************
+// where we can set all of the enemy settings and timers related to the first level
+void Level_One(void){
+	ST7735_FillScreen(0x0000);
+
+	ST7735_SetCursor(1,7);
+	ST7735_OutString("     Level One");
+	ST7735_SetTextColor(0xFFFF);
+	Delay100ms(30);
+}
+// *************** Button_Init **********************************************
+void Button_Init(void){
+  GPIO_PORTE_DIR_R &= ~(0x07);        
+  GPIO_PORTE_DEN_R |= 0x07;         
+}
 
 // *************** LED_Init **********************************************
-void LED_Init(void){ volatile uint32_t delay;
+void LED_Init(void){
   GPIO_PORTF_LOCK_R = 0x4C4F434B;   // 2) unlock GPIO Port F
   GPIO_PORTF_CR_R |= 0x07;           // allow changes to PF4-0
   // only PF0 needs to be unlocked, other bits can't be locked
@@ -88,6 +124,7 @@ void Input_Init(void){volatile int delay;
 	delay = SYSCTL_RCGCGPIO_R;
 	ADC_Init();
 	LED_Init();
+	Button_Init();
 	
 }
 
@@ -97,12 +134,11 @@ int main(void){
   Random_Init(1);
 	SysTick_Init();
 	Input_Init();
-	
+  Output_Init();					// for ST7735
 	Timer1_Init(1454480);
-	//ADC_Init();
-	
+	Intro_Screen();
 
-  Output_Init();
+	Level_One();
   ST7735_FillScreen(0x0000);            // set screen to black
 
 	//ST7735_DrawBitmap(1, 110, landerSprite, 13,12);
@@ -141,11 +177,32 @@ void drawCreatures() {
 		}
 	}
 	for(int i = 0; i < 1; i++){
-		if(player[0].movingFlag == 1){
-			ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_black, player[i].width, player[i].height);
-			ST7735_DrawBitmap(player[i].xpos, convertedValue, ship_right, player[i].width, player[i].height);
-			player[0].movingFlag = 0;
-			player[0].ypos = convertedValue;
+		if(player[0].movingFlag == 1 && player[0].facingLeft == 0){
+			/*if(player[0].thrust ==1){
+				ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_moving_black, player[i].width + 4, player[i].height);
+				ST7735_DrawBitmap(player[i].newxpos, player[i].newypos, ship_moving_right, player[i].width + 4, player[i].height);		//moving to the right				
+			}else{*/
+				ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_black, player[i].width, player[i].height);
+				ST7735_DrawBitmap(player[i].newxpos, player[i].newypos, ship_right, player[i].width, player[i].height);		//moving to the right
+			//}
+			player[i].movingFlag = 0;
+			//player[i].thrust =0;
+			player[i].ypos = player[i].newypos; 
+			player[i].xpos = player[i].newxpos;
+		}
+		
+		if(player[0].movingFlag == 1 && player[0].facingLeft == 1){
+			/*if(player[0].thrust ==1){
+				ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_moving_black, player[i].width + 4, player[i].height);
+				ST7735_DrawBitmap(player[i].newxpos, player[i].newypos, ship_moving_left, player[i].width + 4, player[i].height);		//moving to the right				
+			}else{*/
+				ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_black, player[i].width, player[i].height);
+				ST7735_DrawBitmap(player[i].newxpos, player[i].newypos, ship_left, player[i].width, player[i].height);   //moving to the left
+			//}
+			player[i].movingFlag = 0;
+			//player[i].thrust =0;
+			player[i].ypos = player[i].newypos; 
+			player[i].xpos = player[i].newxpos;
 		}
 	}
 }
