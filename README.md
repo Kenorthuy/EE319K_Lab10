@@ -10,7 +10,7 @@ Inputs:
 		
 		will change the player's x coordinate
 		
-  1 shoot button
+  1 shoot button (PE2)
 		
 		moves along the same y level and for a certain distance in the x level
   
@@ -20,6 +20,7 @@ Outputs:
   Sound
   
   LCD
+- some LEDs, don't know that theyll do yet but we can figure that out
   
 Timers:
 
@@ -28,6 +29,8 @@ Timers:
   Timer0 tracks sound output
   
   Timer1 tracks creature interactions
+  
+  Timer2 will be for animation and keeping track of game time
   
   Busy-Wait LCD
   
