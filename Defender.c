@@ -1,20 +1,12 @@
 // Defender.c
 // Runs on LM4F120/TM4C123
-// Evan Varghese and Ken Nguyen
+// Jonathan Valvano and Daniel Valvano
+// This is a starter project for the EE319K Lab 10
 
-// Last Modified: 1/17/2020
-
-// SOURCE CODE OF ORIGINAL GAME
-// http://tech.quarterarcade.com/tech/MAME/src/williams.c.html.aspx?g=737
-
-// GAMEPLAY OVERVIEW
-// https://www.youtube.com/watch?time_continue=50&v=PAM7_-_Ycxw&feature=emb_title
-// http://www.digitpress.com/dpsoundz/mp3/conquer_the_video_craze/conquer_the_video_craze_03_-_Defender.mp3
-// https://www.arcade-museum.com/game_detail.php?game_id=7547
-
-// sounds at https://seanriddle.com/willy2.html
-// 				and http://www.digitpress.com/dpsoundz/soundfx.htm
-
+// Last Modified: 1/17/2020 
+// http://www.spaceinvaders.de/
+// sounds at http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
+// http://www.classicgaming.cc/classics/spaceinvaders/playguide.php
 /* This example accompanies the books
    "Embedded Systems: Real Time Interfacing to Arm Cortex M Microcontrollers",
    ISBN: 978-1463590154, Jonathan Valvano, copyright (c) 2019
@@ -78,25 +70,75 @@ void Input_Init(void);
 void LED_Init(void);
 void Button_Init(void);
 void Intro_Screen(void);
+void Language_Select(void);
 void Level_One(void);
+
+uint8_t Language; // 0 is for english, 1 is for spanish
+ 
 
 
 // ************** Intro_Screen *****************************************
 void Intro_Screen(void){
+	Output_Clear();
 	ST7735_DrawBitmap(3, 80, title, 122, 26);
-	ST7735_SetCursor(1,10);
+	ST7735_SetCursor(2,10);
 	ST7735_SetTextColor(0xFFFF);
-	ST7735_OutString("  Press any button\n     to continue.");
+	if(Language ==1){
+		ST7735_OutString("Presione cualquier\n      bot\xA2n para\n      continuar");	
+	}else{
+		ST7735_OutString(" Press any button\n     to continue.");
+	}
 	while(GPIO_PORTE_DATA_R == 0);
+	while(GPIO_PORTE_DATA_R ==1);
+}
+
+// ************** Language Select *****************************************
+void Language_Select(void){uint32_t langADC;
+	Output_Clear();
+	ST7735_DrawBitmap(42, 60, globe, 44, 44);
+	ST7735_SetCursor(5,7);
+	Output_Color(0xFFFFFFFF);
+	ST7735_OutString("Select your\n      language.");
+	ST7735_SetCursor(5,10);
+	ST7735_OutString("  English");
+	ST7735_SetCursor(5,11);
+	ST7735_OutString("  Espa\xA4ol");
+
+	while((GPIO_PORTE_DATA_R&0x01) == 0){
+		langADC = ADC_In();	
+		langADC /= 2028;
+			if(langADC == 0){
+				ST7735_SetCursor(5,11);
+				ST7735_OutString("  ");
+				ST7735_SetCursor(5,10);
+				ST7735_OutString(">>");
+				Language = 0;
+			}else{
+				ST7735_SetCursor(5,10);
+				ST7735_OutString("  ");
+				ST7735_SetCursor(5,11);
+				ST7735_OutString(">>");
+				Language = 1;
+			}
+	}
+	while(GPIO_PORTE_DATA_R ==1);
 }
 
 // ***************** Level_One *****************************************
 // where we can set all of the enemy settings and timers related to the first level
 void Level_One(void){
-	ST7735_FillScreen(0x0000);
-
-	ST7735_SetCursor(1,7);
-	ST7735_OutString("     Level One");
+	Output_Clear();
+	ST7735_SetCursor(6,7);
+	if(Language == 1){
+		ST7735_OutString("Nivel Uno");
+		ST7735_SetCursor(6,9);
+		ST7735_OutString("Vidas: 3");
+	}else{
+		ST7735_OutString("Level One");
+		ST7735_SetCursor(6,9);
+		ST7735_OutString("Lives: 3");
+	}
+	ST7735_SetCursor(13,8);
 	ST7735_SetTextColor(0xFFFF);
 	Delay100ms(30);
 }
@@ -136,7 +178,9 @@ int main(void){
 	Input_Init();
   Output_Init();					// for ST7735
 	Timer1_Init(1454480);
+	Language_Select();
 	Intro_Screen();
+
 
 	Level_One();
   ST7735_FillScreen(0x0000);            // set screen to black
