@@ -65,7 +65,7 @@ typedef struct{
 uint8_t fullShot = 0;
 
 player_t player[1] ={
-	{10, 10, 0, 0, playerRw, playerRh, 3, 0, 0}
+	{10, 10, 0, 0, 5, playerRw, playerRh, 3, 0, 0, 0}
 };
 
 creature_t enemies[2] = {
