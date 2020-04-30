@@ -1,12 +1,19 @@
 // Defender.c
 // Runs on LM4F120/TM4C123
-// Jonathan Valvano and Daniel Valvano
-// This is a starter project for the EE319K Lab 10
+// Evan Varghese and Ken Nguyen
 
-// Last Modified: 1/17/2020 
-// http://www.spaceinvaders.de/
-// sounds at http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
-// http://www.classicgaming.cc/classics/spaceinvaders/playguide.php
+// Last Modified: 1/17/2020
+
+// SOURCE CODE OF ORIGINAL GAME
+// http://tech.quarterarcade.com/tech/MAME/src/williams.c.html.aspx?g=737
+
+// GAMEPLAY OVERVIEW
+// https://www.youtube.com/watch?time_continue=50&v=PAM7_-_Ycxw&feature=emb_title
+// http://www.digitpress.com/dpsoundz/mp3/conquer_the_video_craze/conquer_the_video_craze_03_-_Defender.mp3
+// https://www.arcade-museum.com/game_detail.php?game_id=7547
+
+// sounds at https://seanriddle.com/willy2.html
+// 				and http://www.digitpress.com/dpsoundz/soundfx.htm
 /* This example accompanies the books
    "Embedded Systems: Real Time Interfacing to Arm Cortex M Microcontrollers",
    ISBN: 978-1463590154, Jonathan Valvano, copyright (c) 2019
@@ -36,7 +43,6 @@
 // 2*R resistor DAC bit 4 on PB4
 // 1*R resistor DAC bit 5 on PB5 (most significant bit)
 
-
 // Backlight (pin 10) connected to +3.3 V
 // MISO (pin 9) unconnected
 // SCK (pin 8) connected to PA2 (SSI0Clk)
@@ -58,6 +64,7 @@
 #include "Sound.h"
 #include "Timer0.h"
 #include "Timer1.h"
+#include "Timer2.h"
 #include "Creatures.h"
 #include "Images.h"
 #include "SysTick.h"
@@ -68,14 +75,12 @@ void drawCreatures(void);
 void Delay100ms(uint32_t count); // time delay in 0.1 seconds
 void Input_Init(void);
 void LED_Init(void);
+void drawBackground(void);
 void Button_Init(void);
 void Intro_Screen(void);
-void Language_Select(void);
 void Level_One(void);
 
 uint8_t Language; // 0 is for english, 1 is for spanish
- 
-
 
 // ************** Intro_Screen *****************************************
 void Intro_Screen(void){
@@ -142,10 +147,11 @@ void Level_One(void){
 	ST7735_SetTextColor(0xFFFF);
 	Delay100ms(30);
 }
+
 // *************** Button_Init **********************************************
 void Button_Init(void){
-  GPIO_PORTE_DIR_R &= ~(0x07);        
-  GPIO_PORTE_DEN_R |= 0x07;         
+  GPIO_PORTE_DIR_R &= ~(0x7);        
+  GPIO_PORTE_DEN_R |= 0x7;         
 }
 
 // *************** LED_Init **********************************************
@@ -160,67 +166,90 @@ void LED_Init(void){
   GPIO_PORTF_DEN_R |= 0x07;          // 7) enable digital I/O on PF4-0
 }
 
-// *************** Input_Init *****************************************
+// *************** Input_Init ********************************************
 void Input_Init(void){volatile int delay;
 	SYSCTL_RCGCGPIO_R |= 0x3B;
 	delay = SYSCTL_RCGCGPIO_R;
 	ADC_Init();
 	LED_Init();
 	Button_Init();
-	
 }
-
+// *************** MAIN **************************************************
 int main(void){
   DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
   Random_Init(1);
 	SysTick_Init();
 	Input_Init();
-  Output_Init();					// for ST7735
+	Output_Init();
+	
 	Timer1_Init(1454480);
+	Timer2_Init(2);
+	//ADC_Init();
 	Language_Select();
 	Intro_Screen();
+	
 
-
-	Level_One();
+  Level_One();
   ST7735_FillScreen(0x0000);            // set screen to black
 
 	//ST7735_DrawBitmap(1, 110, landerSprite, 13,12);
 	//ST7735_DrawBitmap(21, 110, mutantSprite, 13,12);
-  ST7735_DrawBitmap(41, 110, humanSprite, 7,12);
-	ST7735_DrawFastHLine(1, 100, 128, 0xAB44);
 
-  Delay100ms(50);              // delay 5 sec at 80 MHz
+  Delay100ms(10);              					// delay 1 sec at 80 MHz
 	EnableInterrupts();
 	
   while(1){
-		ST7735_DrawFastHLine(1, 100, 128, 0xAB44);			//re-renders the background
-		if(enemyflag) {
+		if(gameDone) {
+			ST7735_FillScreen(0x0000);            // set screen to black
+		}
+		else if(enemyflag) {
 			enemyflag = 0;
-			enemyMove();																	//move enemies
-			drawCreatures();															//use updated coordinates to draw creatures
+			enemyMove();													//move enemies
+			drawBackground();											//re-render background
+			drawCreatures();											//use updated coordinates to draw creatures
 		}
   }
-
 }
 
+// *************** drawCreatures ****************************************
+// This method renders humans, enemies, the player, and projectiles
+// Input: None
+// Output: None
 void drawCreatures() {
-	for(int i = 0; i < 1; i++) {
+	for(int i = 0; i < 1; i++) {											//draws the humans that arent dead
 		if(humans[i].dead == 0) {
 			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
 		}
 	}
 	for(int i = 0; i < 2; i++) {											//only supports array maximums of two and landers
-		if(enemies[i].type == 1 && enemies[i].dead == 0) {
+		if(enemies[i].type == 1 && enemies[i].dead == 0) {		//draws landers that arent dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, landerSprite, enemies[i].width, enemies[i].height);
 		}
-	}
-	for(int i = 0; i < 5; i++) {											//only supports array maximums of two and landers
-		if(shots[i].override == 0) {
-			ST7735_DrawBitmap(shots[i].xpos, shots[i].ypos, enemyShot, 7, 7);
+		if(enemies[i].type == 1 && enemies[i].dead == 1) {		//draws landers that are dead
+			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, deadLanderSprite, enemies[i].width, enemies[i].height);
+		}
+		if(enemies[i].type == 1 && enemies[i].dead == 2) {		//draws landers that are dead
+			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, explosionSprite, enemies[i].width, enemies[i].height);
 		}
 	}
-	for(int i = 0; i < 1; i++){
+	for(int i = 0; i < 5; i++) {
+		if(shots[i].override == 0) {										//if a shot exists, show it
+			ST7735_DrawBitmap(shots[i].xpos, shots[i].ypos, enemyShot, 7, 7);
+		}
+		if(shots[i].override == 1) {										//if a shot does not exist, print a black rectangle over it
+			ST7735_FillRect(shots[i].xpos, shots[i].ypos, 7, 7, 0x0000);
+		}
+	}
+	for(int i = 0; i < 10; i++) {
+		if(lasers[i].override == 0) {										//if a shot exists, show it
+			ST7735_DrawBitmap(lasers[i].xpos, lasers[i].ypos, playerShot, 12, 2);
+		}
+		if(lasers[i].override == 1) {										//if a shot does not exist, print a black rectangle over it
+			ST7735_FillRect(lasers[i].xpos, lasers[i].ypos, 12, 2, 0x0000);
+		}
+	}
+	for(int i = 0; i < 1; i++){												//print the player using movement information
 		if(player[0].movingFlag == 1 && player[0].facingLeft == 0){
 			/*if(player[0].thrust ==1){
 				ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_moving_black, player[i].width + 4, player[i].height);
@@ -234,7 +263,7 @@ void drawCreatures() {
 			player[i].ypos = player[i].newypos; 
 			player[i].xpos = player[i].newxpos;
 		}
-		
+
 		if(player[0].movingFlag == 1 && player[0].facingLeft == 1){
 			/*if(player[0].thrust ==1){
 				ST7735_DrawBitmap(player[i].xpos, player[i].ypos, ship_moving_black, player[i].width + 4, player[i].height);
@@ -248,6 +277,25 @@ void drawCreatures() {
 			player[i].ypos = player[i].newypos; 
 			player[i].xpos = player[i].newxpos;
 		}
+	}
+}
+
+// *************** drawBackground ****************************************
+// This method quickly renders the basic background and the number of player lives.
+// Input: None
+// Output: None
+void drawBackground() {
+	char lives[5] = {'L','I','V','E','S'};								//load up an array of characters to print
+	int spot = 0;
+	ST7735_DrawFastHLine(1, 105, 128, 0xAB44);						//draw a brown line to represent the horizon
+	ST7735_DrawString(1, 12, lives, 0xFFFF);							//print "LIVES"
+	for(int i = 0; i < player[0].lives; i++) {						//iterate through existing lives
+		ST7735_FillRect(40+10*spot, 121, 5, 5, 0xF800);			//a red rectangle means theres a life
+		spot++;																							//this value modifies the x position
+	}
+	for(int i = player[0].lives; i < 3; i++) {						//overwrites lost lives with a black rectangle
+		ST7735_FillRect(40+10*spot, 121, 6, 6, 0x0000);
+		spot++;
 	}
 }
 
