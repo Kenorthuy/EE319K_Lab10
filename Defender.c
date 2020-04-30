@@ -221,6 +221,9 @@ void drawCreatures() {
 		if(humans[i].dead == 0) {
 			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
 		}
+		if(humans[i].dead == 1) {
+			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, deadMutantSprite, humans[i].width, humans[i].height);
+		}
 	}
 	for(int i = 0; i < 2; i++) {											//only supports array maximums of two and landers
 		if(enemies[i].type == 1 && enemies[i].dead == 0) {		//draws landers that arent dead
