@@ -3,8 +3,11 @@
 void landerMove(uint8_t);
 void humanMove(void);
 void spawnShot(uint8_t, uint8_t, uint8_t);
+void spawnPlayerShot(void);
 void moveShot(uint8_t);
+void movePlayerShot(uint8_t);
 void checkHit(uint8_t);
+void checkPlayerHit(uint8_t);
 void enemyMove(void);
 
 typedef struct { 
@@ -39,6 +42,12 @@ typedef struct{
 	uint8_t override;
 } ball_t;
 
+typedef struct{
+	int16_t xpos;
+	int16_t ypos;
+	uint8_t override;	//1 means it can be overwritten, 0 means it still exists
+} laser_t;
+
 extern uint8_t gameDone;
 
 extern creature_t enemies[2];
@@ -48,3 +57,5 @@ extern creature_t humans[1];
 extern player_t player[1];
 
 extern ball_t shots[5];
+
+extern ball_t lasers[10];

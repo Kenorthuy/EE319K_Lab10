@@ -10,6 +10,8 @@ extern uint8_t playerPotFlag;
 extern uint8_t newYPos;
 extern uint8_t newXPos;
 
+extern uint8_t makeShot;
+
 // **************SysTick_Init*********************
 
 void SysTick_Init(void);

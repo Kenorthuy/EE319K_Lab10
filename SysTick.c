@@ -4,6 +4,7 @@
 #include "../inc/tm4c123gh6pm.h"
 #include "ADC.h"
 #include "creatures.h"
+#include "Timer2.h"
 
 
 // ****** Global Variables and #defines ******************
@@ -12,15 +13,19 @@ uint32_t ADCMail;
 uint8_t playerPotFlag;
 uint8_t newYPos;
 uint8_t newXPos;
+
+uint8_t makeShot;
 #define potOffset 12
 
 // ************** SysTick_Init **************************************
 // sets SysTick to run periodic interrupts at a rate of 30Hz
 void SysTick_Init(void){
 	NVIC_ST_CTRL_R = 0;
-	NVIC_ST_RELOAD_R = 0x0028B0A9;	//SysTick periodic interrupts @ 30Hz
+	NVIC_ST_RELOAD_R = 0x00516152;	//SysTick periodic interrupts @ 30Hz
 	NVIC_ST_CURRENT_R = 0;
 	NVIC_ST_CTRL_R = 0x07;
+	
+	makeShot = 0;
 }
 
 // *************** Convert *******************************************
@@ -54,7 +59,10 @@ void SysTick_Handler(void){//uint8_t convertedValue;
 		player[0].facingLeft =1;
 		player[0].movingFlag =1;
 		player[0].thrust =1;
-	}	
+	}
 	
-
+	if(canShoot){													//this needs to be associated with a button. it doesnt work on my end
+		makeShot = 1;
+		canShoot = 0;
+	}
 }
