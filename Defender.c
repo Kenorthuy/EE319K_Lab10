@@ -186,7 +186,6 @@ void IO_Init(void){volatile int delay;
 	delay = SYSCTL_RCGCGPIO_R;
 	ADC_Init();
 	LED_Init();
-	DAC_Init();
 	Button_Init();
 }
 
@@ -319,7 +318,7 @@ int main(void){
 	SysTick_Init();
 	IO_Init();
 	Output_Init();
-	
+	Sound_Init();
 	Timer1_Init(1454480);
 	Timer2_Init(2);
 	//ADC_Init();
