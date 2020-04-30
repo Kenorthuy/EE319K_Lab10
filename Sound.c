@@ -12,9 +12,9 @@
 
 
 #define shootLen 4080
-#define playerDieLen 17750
-#define thrustLen 7347
-#define scoreTableLen 20480
+#define playerDieLen 26624
+#define thrustLen 10494
+#define scoreTableLen 30720
 #define laserLen 7339
 #define defenderStartLen 32928
 const unsigned char shootWav[shootLen] = {		
