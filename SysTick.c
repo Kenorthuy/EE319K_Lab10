@@ -13,7 +13,7 @@ uint32_t ADCMail;
 uint8_t playerPotFlag;
 uint8_t newYPos;
 uint8_t newXPos;
-
+uint8_t Level;
 uint8_t makeShot;
 #define potOffset 12
 
@@ -47,19 +47,20 @@ void SysTick_Handler(void){//uint8_t convertedValue;
 		lastADCData = ADCMail;
 	}
 	
-	if((GPIO_PORTE_DATA_R & 0x02) == 2){
-		player[0].newxpos = player[0].xpos + player[0].xvel;
-		player[0].facingLeft =0;
-		player[0].movingFlag =1;
-		player[0].thrust =1;
-	}
+	if(Level > 0){
+		if(((GPIO_PORTE_DATA_R & 0x02) == 2) && player[0].xpos < 120){
+			player[0].newxpos = player[0].xpos + player[0].xvel;
+			player[0].facingLeft =0;
+			player[0].movingFlag =1;
+			player[0].thrust =1;
+		}
 	
-	if((GPIO_PORTE_DATA_R & 0x01) == 1){
-		player[0].newxpos = player[0].xpos - player[0].xvel;
-		player[0].facingLeft =1;
-		player[0].movingFlag =1;
-		player[0].thrust =1;
-	}
+		if(((GPIO_PORTE_DATA_R & 0x01) == 1) && player[0].xpos > 0){
+			player[0].newxpos = player[0].xpos - player[0].xvel;
+			player[0].facingLeft =1;
+			player[0].movingFlag =1;
+			player[0].thrust =1;
+		}
 	
 	if(canShoot){													//this needs to be associated with a button. it doesnt work on my end
 		makeShot = 1;

@@ -79,8 +79,12 @@ void drawBackground(void);
 void Button_Init(void);
 void Intro_Screen(void);
 void Level_One(void);
+void Display_Score(void);
+void Game_Over(void);
 
 uint8_t Language; // 0 is for english, 1 is for spanish
+
+
 
 // ************** Intro_Screen *****************************************
 void Intro_Screen(void){
@@ -109,7 +113,7 @@ void Language_Select(void){uint32_t langADC;
 	ST7735_SetCursor(5,11);
 	ST7735_OutString("  Espa\xA4ol");
 
-	while((GPIO_PORTE_DATA_R&0x01) == 0){
+	while((GPIO_PORTE_DATA_R) == 0){
 		langADC = ADC_In();	
 		langADC /= 2028;
 			if(langADC == 0){
@@ -126,7 +130,7 @@ void Language_Select(void){uint32_t langADC;
 				Language = 1;
 			}
 	}
-	while(GPIO_PORTE_DATA_R ==1);
+	while(GPIO_PORTE_DATA_R != 0);
 }
 
 // ***************** Level_One *****************************************
@@ -145,7 +149,15 @@ void Level_One(void){
 	}
 	ST7735_SetCursor(13,8);
 	ST7735_SetTextColor(0xFFFF);
+	Level =1;
+	player[0].facingLeft = 0;
 	Delay100ms(30);
+}
+
+// ***************** Game_Over *************************************
+// shows that the game is over and then displays the player's score
+void Game_Over(void){
+	
 }
 
 // *************** Button_Init **********************************************
@@ -173,43 +185,6 @@ void Input_Init(void){volatile int delay;
 	ADC_Init();
 	LED_Init();
 	Button_Init();
-}
-// *************** MAIN **************************************************
-int main(void){
-  DisableInterrupts();
-  PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
-  Random_Init(1);
-	SysTick_Init();
-	Input_Init();
-	Output_Init();
-	
-	Timer1_Init(1454480);
-	Timer2_Init(2);
-	//ADC_Init();
-	Language_Select();
-	Intro_Screen();
-	
-
-  Level_One();
-  ST7735_FillScreen(0x0000);            // set screen to black
-
-	//ST7735_DrawBitmap(1, 110, landerSprite, 13,12);
-	//ST7735_DrawBitmap(21, 110, mutantSprite, 13,12);
-
-  Delay100ms(10);              					// delay 1 sec at 80 MHz
-	EnableInterrupts();
-	
-  while(1){
-		if(gameDone) {
-			ST7735_FillScreen(0x0000);            // set screen to black
-		}
-		else if(enemyflag) {
-			enemyflag = 0;
-			enemyMove();													//move enemies
-			drawBackground();											//re-render background
-			drawCreatures();											//use updated coordinates to draw creatures
-		}
-  }
 }
 
 // *************** drawCreatures ****************************************
@@ -302,8 +277,7 @@ void drawBackground() {
 	}
 }
 
-// You can't use this timer, it is here for starter code only 
-// you must use interrupts to perform delays
+//hard coded delay function
 void Delay100ms(uint32_t count){uint32_t volatile time;
   while(count>0){
     time = 727240;  // 0.1sec at 80 MHz
@@ -313,3 +287,56 @@ void Delay100ms(uint32_t count){uint32_t volatile time;
     count--;
   }
 }
+
+// ****************** Display_Score **************************************
+// displays in-game score below lives
+void Display_Score(void){
+	char score[5] = {'S','C','O','R','E'};		
+	ST7735_DrawString(1, 13, score, 0xFFFF);
+	ST7735_SetCursor(7,13);
+	LCD_OutDec(Score);
+	
+	
+}
+
+// *************** MAIN **************************************************
+int main(void){
+  DisableInterrupts();
+  PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
+  Random_Init(1);
+	SysTick_Init();
+	Input_Init();
+	Output_Init();
+	
+	Timer1_Init(1454480);
+	Timer2_Init(2);
+	//ADC_Init();
+	Language_Select();
+	Intro_Screen();
+	
+
+  Level_One();
+  ST7735_FillScreen(0x0000);            // set screen to black
+
+	//ST7735_DrawBitmap(1, 110, landerSprite, 13,12);
+	//ST7735_DrawBitmap(21, 110, mutantSprite, 13,12);
+
+  Delay100ms(10);              					// delay 1 sec at 80 MHz
+	EnableInterrupts();
+	
+  while(1){
+		if(gameDone) {
+			Game_Over();
+			ST7735_FillScreen(0x0000);            // set screen to black
+		}
+		else if(enemyflag) {
+			enemyflag = 0;
+			enemyMove();													//move enemies
+			drawBackground();											//re-render background
+			drawCreatures();											//use updated coordinates to draw creatures
+			Display_Score();
+		}
+  }
+}
+
+

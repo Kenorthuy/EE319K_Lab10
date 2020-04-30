@@ -5,6 +5,8 @@
 // Jonathan Valvano
 // 1/17/2020
 
+#ifndef __sound_h
+#define __sound_h
 #include <stdint.h>
 void Sound_Init(void);
 void Sound_Play(const uint8_t *pt, uint32_t count);
@@ -12,6 +14,7 @@ void Sound_Shoot(void);
 void Sound_Explosion(void);
 
 
-typedef enum {Drop,Clear,Rocket,Fire} soundeffect;
+typedef enum {shoot, playerDie, thrust, scoreTable, laser, defenderStart} soundeffect;
 void playsound(soundeffect);
 
+#endif // __sound_h

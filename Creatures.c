@@ -28,6 +28,9 @@
 #define screenH 128
 #define screenW 128
 
+
+uint32_t Score;
+
 //this structure keeps track of all non-player creature properties. if a creature does not use a certain value, it wont be checked but its best to leave it at zero to avoid confusion
 typedef struct { 
   uint8_t type;

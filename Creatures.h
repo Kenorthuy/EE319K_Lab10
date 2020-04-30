@@ -10,6 +10,8 @@ void checkHit(uint8_t);
 void checkPlayerHit(uint8_t);
 void enemyMove(void);
 
+extern uint32_t Score;
+
 typedef struct { 
   uint8_t type;
   int16_t xpos;
