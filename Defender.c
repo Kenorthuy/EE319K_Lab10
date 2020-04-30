@@ -68,12 +68,13 @@
 #include "Creatures.h"
 #include "Images.h"
 #include "SysTick.h"
+#include "DAC.h"
 
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
 void drawCreatures(void);
 void Delay100ms(uint32_t count); // time delay in 0.1 seconds
-void Input_Init(void);
+void IO_Init(void);
 void LED_Init(void);
 void drawBackground(void);
 void Button_Init(void);
@@ -152,6 +153,7 @@ void Level_One(void){
 	Level =1;
 	player[0].facingLeft = 0;
 	Delay100ms(30);
+	playsound(defenderStart);
 }
 
 // ***************** Game_Over *************************************
@@ -178,12 +180,13 @@ void LED_Init(void){
   GPIO_PORTF_DEN_R |= 0x07;          // 7) enable digital I/O on PF4-0
 }
 
-// *************** Input_Init ********************************************
-void Input_Init(void){volatile int delay;
+// *************** IO_Init ********************************************
+void IO_Init(void){volatile int delay;
 	SYSCTL_RCGCGPIO_R |= 0x3B;
 	delay = SYSCTL_RCGCGPIO_R;
 	ADC_Init();
 	LED_Init();
+	DAC_Init();
 	Button_Init();
 }
 
@@ -264,9 +267,14 @@ void drawCreatures() {
 // Output: None
 void drawBackground() {
 	char lives[5] = {'L','I','V','E','S'};								//load up an array of characters to print
+	char vidas[5] = {'V','I','D','A','S'};								//spanish array
 	int spot = 0;
 	ST7735_DrawFastHLine(1, 105, 128, 0xAB44);						//draw a brown line to represent the horizon
-	ST7735_DrawString(1, 12, lives, 0xFFFF);							//print "LIVES"
+	if(Language ==1){
+		ST7735_DrawString(1, 12, vidas, 0xFFFF);							//print "VIDAS"	if Language = 1
+	}else{
+		ST7735_DrawString(1, 12, lives, 0xFFFF);							//print "LIVES"
+	}
 	for(int i = 0; i < player[0].lives; i++) {						//iterate through existing lives
 		ST7735_FillRect(40+10*spot, 121, 5, 5, 0xF800);			//a red rectangle means theres a life
 		spot++;																							//this value modifies the x position
@@ -291,12 +299,16 @@ void Delay100ms(uint32_t count){uint32_t volatile time;
 // ****************** Display_Score **************************************
 // displays in-game score below lives
 void Display_Score(void){
-	char score[5] = {'S','C','O','R','E'};		
-	ST7735_DrawString(1, 13, score, 0xFFFF);
-	ST7735_SetCursor(7,13);
-	LCD_OutDec(Score);
-	
-	
+	char score[5] = {'S','C','O','R','E'};
+	char puntajes[9] = {'P','U','N','T','A','J','E','S',0};
+	if(Language ==1){
+		ST7735_DrawString(1, 13, puntajes, 0xFFFF);							//print "PUNTAJES" if Language =1
+		ST7735_SetCursor(10,13);		
+	}else{
+		ST7735_DrawString(1, 13, score, 0xFFFF);							//print "SCORE"
+		ST7735_SetCursor(7,13);
+	}
+		LCD_OutDec(Score);
 }
 
 // *************** MAIN **************************************************
@@ -305,7 +317,7 @@ int main(void){
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
   Random_Init(1);
 	SysTick_Init();
-	Input_Init();
+	IO_Init();
 	Output_Init();
 	
 	Timer1_Init(1454480);

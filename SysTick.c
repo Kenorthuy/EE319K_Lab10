@@ -31,7 +31,7 @@ void SysTick_Init(void){
 // *************** Convert *******************************************
 // converts the ADC data to a value in between 0 and 128
 uint32_t Convert(uint32_t ADCData){
-	return (ADCData *128) /4096;
+	return (ADCData *95) /4096;
 }
 
 // ************** SysTick_Handler **********************************
@@ -52,6 +52,7 @@ void SysTick_Handler(void){//uint8_t convertedValue;
 			player[0].newxpos = player[0].xpos + player[0].xvel;
 			player[0].facingLeft =0;
 			player[0].movingFlag =1;
+			playsound(thrust);
 			player[0].thrust =1;
 		}
 	
@@ -59,11 +60,13 @@ void SysTick_Handler(void){//uint8_t convertedValue;
 			player[0].newxpos = player[0].xpos - player[0].xvel;
 			player[0].facingLeft =1;
 			player[0].movingFlag =1;
+			playsound(thrust);
 			player[0].thrust =1;
 		}
 	
-	if(canShoot){													//this needs to be associated with a button. it doesnt work on my end
-		makeShot = 1;
-		canShoot = 0;
-	}
+		if((GPIO_PORTE_DATA_R & 0x4) == 4){	
+			makeShot = 1;
+			playsound(laser);
+			canShoot = 0;
+		}
 }

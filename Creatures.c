@@ -197,6 +197,7 @@ void humanMove(void) {
 	}
 	if(humans[0].xpos + humans[0].width >= player[0].xpos && humans[0].xpos <= player[0].xpos + player[0].width && 
 		 humans[0].ypos + humans[0].height>= player[0].ypos && humans[0].ypos <= player[0].ypos + player[0].height) {
+			 Score += 50; 						// doesn't really work the way it should but when you catch the human mid-air you get some points
 			 humans[0].deadimpact = 0;
 	}
 }
