@@ -180,7 +180,7 @@ void humanMove(void) {
 	}
 	if(humans[0].ypos == 110) {
 		if(humans[0].deadimpact == 1) {
-			//they should die. i dont know how to illustrate that clearly for the player
+			humans[0].dead = 1;
 		}
 		else{
 			uint8_t randommove = Random()%20+1;
@@ -191,6 +191,10 @@ void humanMove(void) {
 				humans[0].xpos--;
 			}
 		}
+	}
+	if(humans[0].xpos + humans[0].width >= player[0].xpos && humans[0].xpos <= player[0].xpos + player[0].width && 
+		 humans[0].ypos + humans[0].height>= player[0].ypos && humans[0].ypos <= player[0].ypos + player[0].height) {
+			 humans[0].deadimpact = 0;
 	}
 }
 
@@ -289,8 +293,8 @@ void checkHit(uint8_t thisShot) {
 
 void checkPlayerHit(uint8_t thisShot) {
 	for(int i = 0; i < 2; i++) {
-		if(lasers[thisShot].xpos >= enemies[i].xpos -2&& lasers[thisShot].xpos <= enemies[i].xpos + enemies[i].width +2&& 
-			 lasers[thisShot].ypos >= enemies[i].ypos -2&& lasers[thisShot].ypos <= enemies[i].ypos + enemies[i].height+2) {
+		if(lasers[thisShot].xpos + 12>= enemies[i].xpos && lasers[thisShot].xpos <= enemies[i].xpos + enemies[i].width&& 
+			 lasers[thisShot].ypos + 2>= enemies[i].ypos && lasers[thisShot].ypos <= enemies[i].ypos + enemies[i].height) {
 			enemies[i].dead = 1;
 			lasers[thisShot].override = 1;
 			break;
@@ -325,6 +329,9 @@ void enemyMove() {										//this calls all the enemies to move in their certai
 	for(int i = 0; i < 4; i++) {
 		if(enemies[i].type == lander && enemies[i].dead == 0) {
 			landerMove(i);									//a non-dead enemy should move
+		}
+		if(enemies[i].dead == 1 && enemies[i].carrying == 1) {
+			humans[0].pickedup = 0;
 		}
 		if(enemies[i].dead == 1 && changeFrame) {
 			enemies[i].dead = 2;						//now this should make them overwritable later
