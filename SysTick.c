@@ -5,7 +5,7 @@
 #include "ADC.h"
 #include "creatures.h"
 #include "Timer2.h"
-
+#include "sound.h"
 
 // ****** Global Variables and #defines ******************
 uint32_t lastADCData = 10;
