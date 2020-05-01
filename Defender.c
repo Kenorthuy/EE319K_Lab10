@@ -152,6 +152,8 @@ void Level_One(void){
 	}
 	Level =1;
 	player[0].facingLeft = 0;
+	maxEnemiesDead = 2;
+	enemySize = 3;
 	Delay100ms(30);
 	playsound(defenderStart);
 }
@@ -161,16 +163,18 @@ void Level_One(void){
 // where we can set all of the enemy settings and timers related to the first level
 void Level_Two(void){
 	DisableInterrupts();
+	maxEnemiesDead = 3;
+	enemySize = 4;
 	if(humans[0].dead == 1) {
 		spawnMutants = 1;
 	}
 	if(spawnMutants) {
-		creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-		enemies[0] = enemy;
+		for(int i = 1; i < enemySize; i++) {
+			creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+			enemies[i] = enemy;
+		}
 		creature_t enemy1 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-		enemies[1] = enemy;
-		creature_t enemy2 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-		enemies[2] = enemy;
+		enemies[0] = enemy1;
 	}
 	else {
 		for(int i = 0; i < enemySize; i++) {
@@ -202,6 +206,7 @@ void Level_Two(void){
 	player[0].facingLeft = 0;
 	Delay100ms(30);
 	Output_Clear();
+
 	EnableInterrupts();
 	playsound(defenderStart);
 }
@@ -211,21 +216,19 @@ void Level_Two(void){
 // where we can set all of the enemy settings and timers related to the first level
 void Level_Three(void){
 	DisableInterrupts();
+	maxEnemiesDead = 4;
+	enemySize = 5;
 	if(humans[0].dead == 1) {
 		spawnMutants = 1;
 	}
-	if(spawnMutants == 1) {
-		spawnMutants = 0;
-		humans[0].dead = 0;
-	}
 	
 	if(spawnMutants) {
-		creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-		enemies[0] = enemy;
+		for(int i = 1; i < enemySize; i++) {
+			creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+			enemies[i] = enemy;
+		}
 		creature_t enemy1 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-		enemies[1] = enemy;
-		creature_t enemy2 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-		enemies[2] = enemy;
+		enemies[0] = enemy1;
 	}
 	else {
 		for(int i = 0; i < enemySize; i++) {
@@ -239,15 +242,15 @@ void Level_Three(void){
 		humans[0].ypos = 110;
 	}
 	Output_Clear();
-	ST7735_SetCursor(5,7);
+	ST7735_SetCursor(5,6);
 	if(Language == 1){
-		ST7735_OutString("Nivel Tres");
+		ST7735_OutString("Nivel Tres:\n      SOBREVIVE");
 		ST7735_SetCursor(6,9);
 		ST7735_OutString("Vidas:");
 		ST7735_SetCursor(13,9);
 		LCD_OutDec(player[0].lives);
 	}else{
-		ST7735_OutString("Level Three");
+		ST7735_OutString("Level Three:\n     SURVIVE");
 		ST7735_SetCursor(6,9);
 		ST7735_OutString("Lives:");
 		ST7735_SetCursor(13,9);
@@ -257,6 +260,7 @@ void Level_Three(void){
 	player[0].facingLeft = 0;
 	Delay100ms(30);
 	Output_Clear();
+
 	EnableInterrupts();
 	playsound(defenderStart);
 }
@@ -264,7 +268,25 @@ void Level_Three(void){
 // ***************** Game_Over *************************************
 // shows that the game is over and then displays the player's score
 void Game_Over(void){
-	
+	GPIO_PORTE_DIR_R |= 0x7; 
+	playsound(scoreTable);
+	ST7735_FillScreen(0x0000);            // set screen to black
+
+	if(Language == 1){
+		ST7735_SetCursor(3,6);
+		ST7735_OutString("JUEGO TERMINADO");
+		ST7735_SetCursor(4,7);
+		ST7735_OutString("PUNTAJES:");
+		ST7735_SetCursor(14,7);		
+	}else{
+		ST7735_SetCursor(6,6);
+		ST7735_OutString("GAME OVER");
+		ST7735_SetCursor(6,7);
+		ST7735_OutString("SCORE:");
+		ST7735_SetCursor(12,7);
+	}
+	LCD_OutDec(Score);
+	while(1);
 }
 
 // *************** Button_Init **********************************************
@@ -316,10 +338,10 @@ void drawCreatures() {
 		if(enemies[i].type == 1 && enemies[i].dead == 0) {		//draws landers that arent dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, landerSprite, enemies[i].width, enemies[i].height);
 		}
-		if(enemies[i].type == 1 && enemies[i].dead == 1) {		//draws landers that are dead
+		if(enemies[i].type == 1 && enemies[i].dead < maxEnemiesDead && enemies[i].dead != 0) {		//draws landers that are dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, deadLanderSprite, enemies[i].width, enemies[i].height);
 		}
-		if(enemies[i].type == 1 && enemies[i].dead == 2) {		//draws landers that are dead
+		if(enemies[i].type == 1 && enemies[i].dead == maxEnemiesDead) {		//draws landers that are dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, explosionSprite, enemies[i].width, enemies[i].height);
 			enemies[i].xpos = 115;
 			enemies[i].ypos = 115;

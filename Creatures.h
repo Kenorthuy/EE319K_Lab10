@@ -13,6 +13,7 @@ void enemyMove(void);
 
 extern uint32_t Score;
 extern uint8_t spawnMutants;
+extern uint8_t maxEnemiesDead;
 
 typedef struct { 
   uint8_t type;
@@ -67,3 +68,4 @@ extern ball_t shots[5];
 
 extern uint8_t laserSize;
 extern ball_t lasers[10];
+

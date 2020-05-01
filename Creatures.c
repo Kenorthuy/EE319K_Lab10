@@ -78,13 +78,15 @@ player_t player[1] ={
 };
 
 uint8_t enemySize = 3;
-creature_t enemies[3] = {
+creature_t enemies[5] = {
 	//{lander, 20, 20, landerw, landerh, 0, 0, 0, 0},
 	//{lander, 80, 80, landerw, landerh, 0, 0, 0, 0},
 	//{mutant, 110, 100, mutantw, mutanth, 0, 0, 0, 0}
 	{lander, 20, 20, landerw, landerh, 0, 0, 0, 0},
 	{lander, 80, 80, landerw, landerh, 0, 0, 0, 0},
-	{lander, 110, 100, landerw, landerh, 0, 0, 0, 0}
+	{lander, 60, 100, landerw, landerh, 0, 0, 0, 0},
+	{lander, 80, 80, landerw, landerh, 0, 0, 0, 0},
+	{lander, 40, 100, landerw, landerh, 0, 0, 0, 0}
 };
 
 uint8_t humanSize = 1;
@@ -127,11 +129,12 @@ void checkPlayerHit(uint8_t);
 void enemyMove(void);
 
 uint8_t spawnMutants;
+uint8_t maxEnemiesDead;
 
 void spawnLander() {
 	if(fullEnemy == 0 && changeFrame) {
 		for(int i = 0 ; i < enemySize; i++) {
-			if(enemies[i].dead == 2) {
+			if(enemies[i].dead == maxEnemiesDead) {
 				creature_t enemy = {lander, Random()%110+1, Random()%20+10, landerw, landerh, 0, 0, 0, 0};
 				enemies[i] = enemy;
 			}
@@ -142,7 +145,7 @@ void spawnLander() {
 void spawnMutant() {
 	if(fullEnemy == 0 && changeFrame) {
 		for(int i = 0 ; i < enemySize; i++) {
-			if(enemies[i].dead == 2) {
+			if(enemies[i].dead == maxEnemiesDead) {
 				creature_t enemy = {mutant, Random()%110+1, Random()%20+10, landerw, landerh, 0, 0, 0, 0};
 				enemies[i] = enemy;
 				break;
@@ -489,7 +492,7 @@ void enemyMove() {										//this calls all the enemies to move in their certai
 				humans[0].pickedup = 0;
 			}
 			if(changeFrame) {
-				enemies[i].dead = 2;						//now this should make them overwritable later
+				enemies[i].dead = maxEnemiesDead;						//now this should make them overwritable later
 			}
 		}
 	}
