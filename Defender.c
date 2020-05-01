@@ -161,6 +161,28 @@ void Level_One(void){
 // where we can set all of the enemy settings and timers related to the first level
 void Level_Two(void){
 	DisableInterrupts();
+	if(humans[0].dead == 1) {
+		spawnMutants = 1;
+	}
+	if(spawnMutants) {
+		creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+		enemies[0] = enemy;
+		creature_t enemy1 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+		enemies[1] = enemy;
+		creature_t enemy2 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+		enemies[2] = enemy;
+	}
+	else {
+		for(int i = 0; i < enemySize; i++) {
+			creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+			enemies[i] = enemy;
+		}
+	}
+	if(humans[0].dead == 0) {
+		humans[0].deadimpact = 0;
+		humans[0].pickedup = 0;
+		humans[0].ypos = 110;
+	}
 	Output_Clear();
 	ST7735_SetCursor(6,7);
 	if(Language == 1){
@@ -189,6 +211,33 @@ void Level_Two(void){
 // where we can set all of the enemy settings and timers related to the first level
 void Level_Three(void){
 	DisableInterrupts();
+	if(humans[0].dead == 1) {
+		spawnMutants = 1;
+	}
+	if(spawnMutants == 1) {
+		spawnMutants = 0;
+		humans[0].dead = 0;
+	}
+	
+	if(spawnMutants) {
+		creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+		enemies[0] = enemy;
+		creature_t enemy1 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+		enemies[1] = enemy;
+		creature_t enemy2 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+		enemies[2] = enemy;
+	}
+	else {
+		for(int i = 0; i < enemySize; i++) {
+			creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+			enemies[i] = enemy;
+		}
+	}
+	if(humans[0].dead == 0) {
+		humans[0].deadimpact = 0;
+		humans[0].pickedup = 0;
+		humans[0].ypos = 110;
+	}
 	Output_Clear();
 	ST7735_SetCursor(5,7);
 	if(Language == 1){
@@ -250,15 +299,20 @@ void IO_Init(void){volatile int delay;
 // Input: None
 // Output: None
 void drawCreatures() {
-	for(int i = 0; i < 1; i++) {											//draws the humans that arent dead
+	ST7735_FillRect(0,0,128,10,0x0000);
+	if(clearScreen) {
+		ST7735_FillScreen(0x0000);
+		clearScreen = 0;
+	}
+	for(int i = 0; i < humanSize; i++) {											//draws the humans that arent dead
 		if(humans[i].dead == 0) {
 			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
 		}
 		if(humans[i].dead == 1) {
-			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, deadMutantSprite, humans[i].width, humans[i].height);
+			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, deadHumanSprite, humans[i].width, humans[i].height);
 		}
 	}
-	for(int i = 0; i < 2; i++) {											//only supports array maximums of two and landers
+	for(int i = 0; i < enemySize; i++) {											//only supports array maximums of two and landers
 		if(enemies[i].type == 1 && enemies[i].dead == 0) {		//draws landers that arent dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, landerSprite, enemies[i].width, enemies[i].height);
 		}
@@ -267,9 +321,22 @@ void drawCreatures() {
 		}
 		if(enemies[i].type == 1 && enemies[i].dead == 2) {		//draws landers that are dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, explosionSprite, enemies[i].width, enemies[i].height);
+			enemies[i].xpos = 115;
+			enemies[i].ypos = 115;
+		}
+		if(enemies[i].type == 2 && enemies[i].dead == 0) {		//draws landers that arent dead
+			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, mutantSprite, enemies[i].width, enemies[i].height);
+		}
+		if(enemies[i].type == 2 && enemies[i].dead == 1) {		//draws landers that are dead
+			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, deadMutantSprite, enemies[i].width, enemies[i].height);
+		}
+		if(enemies[i].type == 2 && enemies[i].dead == 2) {		//draws landers that are dead
+			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, explosionSprite, enemies[i].width, enemies[i].height);
+			enemies[i].xpos = 115;
+			enemies[i].ypos = 115;
 		}
 	}
-	for(int i = 0; i < 5; i++) {
+	for(int i = 0; i < shotSize; i++) {
 		if(shots[i].override == 0) {										//if a shot exists, show it
 			ST7735_DrawBitmap(shots[i].xpos, shots[i].ypos, enemyShot, 7, 7);
 		}
@@ -277,7 +344,7 @@ void drawCreatures() {
 			ST7735_FillRect(shots[i].xpos, shots[i].ypos, 7, 7, 0x0000);
 		}
 	}
-	for(int i = 0; i < 10; i++) {
+	for(int i = 0; i < laserSize; i++) {
 		if(lasers[i].override == 0) {										//if a shot exists, show it
 			ST7735_DrawBitmap(lasers[i].xpos, lasers[i].ypos, playerShot, 12, 2);
 		}
@@ -315,6 +382,7 @@ void drawCreatures() {
 		}
 	}
 }
+
 
 // *************** drawBackground ****************************************
 // This method quickly renders the basic background and the number of player lives.
