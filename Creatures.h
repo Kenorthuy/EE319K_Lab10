@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+void spawnLander(uint8_t);
 void landerMove(uint8_t);
 void humanMove(void);
 void spawnShot(uint8_t, uint8_t, uint8_t);
@@ -11,6 +12,7 @@ void checkPlayerHit(uint8_t);
 void enemyMove(void);
 
 extern uint32_t Score;
+extern uint8_t spawnMutants;
 
 typedef struct { 
   uint8_t type;
@@ -52,12 +54,16 @@ typedef struct{
 
 extern uint8_t gameDone;
 
-extern creature_t enemies[2];
+extern uint8_t enemySize;
+extern creature_t enemies[3];
 
+extern uint8_t humanSize;
 extern creature_t humans[1];
 
 extern player_t player[1];
 
+extern uint8_t shotSize;
 extern ball_t shots[5];
 
+extern uint8_t laserSize;
 extern ball_t lasers[10];

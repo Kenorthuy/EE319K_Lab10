@@ -27,6 +27,7 @@
 
 extern uint8_t canShoot;
 extern uint8_t changeFrame;
+extern uint8_t clearScreen;
 // ***************** Timer0_Init ****************
 // Activate Timer0 interrupts to run user task periodically
 // Inputs:  task is a pointer to a user function

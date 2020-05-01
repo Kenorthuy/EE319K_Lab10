@@ -33,13 +33,14 @@
 uint8_t canShoot;
 uint8_t explocounter;
 uint8_t changeFrame;
+uint8_t clearScreen;
 
 void Timer2_Init(unsigned long period){
   SYSCTL_RCGCTIMER_R |= 0x04;   // 0) activate timer2
   TIMER2_CTL_R = 0x00000000;    // 1) disable timer2A during setup
   TIMER2_CFG_R = 0x00000000;    // 2) configure for 32-bit mode
   TIMER2_TAMR_R = 0x00000002;   // 3) configure for periodic mode, default down-count settings
-  TIMER2_TAILR_R = 80000000;    // 4) reload value
+  TIMER2_TAILR_R = 40000000;    // 4) reload value
   TIMER2_TAPR_R = 0;            // 5) bus clock resolution
   TIMER2_ICR_R = 0x00000001;    // 6) clear timer2A timeout flag
   TIMER2_IMR_R = 0x00000001;    // 7) arm timeout interrupt
@@ -51,16 +52,24 @@ void Timer2_Init(unsigned long period){
 	
 	canShoot = 1;
 	explocounter = 0;
+	changeFrame = 0;
+	clearScreen = 0;
 }
 
 void Timer2A_Handler(void){
 	TIMER2_ICR_R = TIMER_ICR_TATOCINT;// acknowledge TIMER2A timeout
   canShoot = 1;
-	explocounter = (explocounter+1)%4;
-	if(explocounter == 0) {
+	explocounter = (explocounter+1)%16;
+	if(explocounter == 0 || explocounter == 8) {
 		changeFrame = 1;
 	}
 	else {
 		changeFrame = 0;
+	}
+	if(explocounter == 7) {
+		clearScreen = 1;
+	}
+	else {
+		clearScreen = 0;
 	}
 }

@@ -74,18 +74,25 @@ uint8_t fullShot = 0;
 uint8_t fullLaser = 0;
 
 player_t player[1] ={
-	{10, 10, 0, 0, 2, playerRw, playerRh, 3, 0, 1, 0}
+	{10, 10, 0, 0, 5, playerRw, playerRh, 3, 0, 1, 0}
 };
 
-creature_t enemies[2] = {
+uint8_t enemySize = 3;
+creature_t enemies[3] = {
+	//{lander, 20, 20, landerw, landerh, 0, 0, 0, 0},
+	//{lander, 80, 80, landerw, landerh, 0, 0, 0, 0},
+	//{mutant, 110, 100, mutantw, mutanth, 0, 0, 0, 0}
 	{lander, 20, 20, landerw, landerh, 0, 0, 0, 0},
-	{lander, 80, 80, landerw, landerh, 0, 0, 0, 0}
+	{lander, 80, 80, landerw, landerh, 0, 0, 0, 0},
+	{lander, 110, 100, landerw, landerh, 0, 0, 0, 0}
 };
 
+uint8_t humanSize = 1;
 creature_t humans[1] = {
 	{human, 41, 110, humanw, humanh, 0, 0, 0, 0}
 };
 
+uint8_t shotSize = 5;
 ball_t shots[5] = {											//a maximum of five balls on screen at once
 	{0, 0, 0, 0, 1, 0},											//every value is initialized with 1 in the override field to show that the balls dont exist
 	{0, 0, 0, 0, 1, 0},
@@ -94,6 +101,7 @@ ball_t shots[5] = {											//a maximum of five balls on screen at once
 	{0, 0, 0, 0, 1, 0}
 };
 
+uint8_t laserSize = 5;
 ball_t lasers[10] = {											//a maximum of 15 balls on screen at once
 	{0, 0, 0, 0, 1, 1},											//every value is initialized with 1 in the override field to show that the balls dont exist
 	{0, 0, 0, 0, 1, 1},
@@ -107,6 +115,7 @@ ball_t lasers[10] = {											//a maximum of 15 balls on screen at once
 	{0, 0, 0, 0, 1, 1}
 };
 
+void spawnLander(void);
 void landerMove(uint8_t);
 void humanMove(void);
 void spawnShot(uint8_t, uint8_t, uint8_t);
@@ -117,6 +126,31 @@ void checkHit(uint8_t);
 void checkPlayerHit(uint8_t);
 void enemyMove(void);
 
+uint8_t spawnMutants;
+
+void spawnLander() {
+	if(fullEnemy == 0 && changeFrame) {
+		for(int i = 0 ; i < enemySize; i++) {
+			if(enemies[i].dead == 2) {
+				creature_t enemy = {lander, Random()%110+1, Random()%20+10, landerw, landerh, 0, 0, 0, 0};
+				enemies[i] = enemy;
+			}
+		}
+	}
+}
+
+void spawnMutant() {
+	if(fullEnemy == 0 && changeFrame) {
+		for(int i = 0 ; i < enemySize; i++) {
+			if(enemies[i].dead == 2) {
+				creature_t enemy = {mutant, Random()%110+1, Random()%20+10, landerw, landerh, 0, 0, 0, 0};
+				enemies[i] = enemy;
+				break;
+			}
+		}
+	}
+}
+
 // *************** landerMove *******************************************
 // If a human exists on the screen and isn't picked up, the lander should try to reach and pick it up in a predictable manner
 // If a lander is carrying a human to the top of the screen, that should be their sole focus
@@ -125,7 +159,7 @@ void enemyMove(void);
 // Input: Index Position of the Enemy
 // Output: None
 void landerMove(uint8_t index) {
-	if(humans[0].pickedup != 1) {																																		//if the human can be picked up
+	if(humans[0].pickedup != 1 && humans[0].dead == 0) {																																		//if the human can be picked up
 		if(humans[0].xpos + humans[0].width/2 < enemies[index].xpos + enemies[index].width/2) {				//try to get the center of the lander to align with the center of the human
 			(enemies[index].xpos)--;
 		}
@@ -142,6 +176,46 @@ void landerMove(uint8_t index) {
 		(enemies[index].carrying) = 1;									//if the ship with a carrying flag is destroyed, the human falls (ypos increases by 2) and should die if he hits the ground
 		(enemies[index].ypos)--;
 	}
+	if(humans[0].dead == 1 || (humans[0].pickedup == 1 && enemies[index].carrying == 0)) {
+		int8_t xMover = Random()%15 + 1;
+		int8_t yMover = Random()%15 + 1;
+		if(player[0].xpos > enemies[index].xpos) {
+			xMover+=5;
+		}
+		if(player[0].xpos < enemies[index].xpos) {
+			xMover-=5;
+		}
+		if(player[0].ypos > enemies[index].ypos) {
+			yMover+=5;
+		}
+		if(player[0].ypos < enemies[index].ypos) {
+			yMover-=5;
+		}
+		if(xMover>=12) {
+			enemies[index].xpos+=1;
+		}
+		else if(xMover<=8) {
+			enemies[index].xpos-=1;
+		}
+		if(yMover>=12) {
+			enemies[index].ypos+=1;
+		}
+		else if(yMover<=8){
+			enemies[index].ypos-=1;
+		}
+		if(enemies[index].xpos < 0) {
+			enemies[index].xpos = 0;
+		}
+		if(enemies[index].xpos > 128-landerw) {
+			enemies[index].xpos = 128-landerw;
+		}
+		if(enemies[index].ypos < 20) {
+			enemies[index].ypos = 20;
+		}
+		if(enemies[index].ypos > 110-landerh) {
+			enemies[index].ypos = 110-landerh;
+		}
+	}
 	
 	if(enemies[index].carrying == 1 && enemies[index].ypos + humanh - 3 <= 0) {											//if the human is carried off it and the lander are technically dead
 		humans[0].dead = 1;
@@ -150,7 +224,65 @@ void landerMove(uint8_t index) {
 	if(((Random())%20+1) == 20 && fullShot == 0) {																									//the lander can decide randomly to shoot in the players general direction
 		uint8_t xway = 0;
 		uint8_t yway = 0;
-		shots[index].yvel = 0;
+		if(enemies[index].xpos > player[0].xpos) {																										//the lander picks a direction for projectile velocity here
+			xway = 1;
+		}
+		if(enemies[index].xpos < player[0].xpos) {
+			xway = 2;
+		}
+		if(enemies[index].ypos > player[0].ypos) {
+			yway = 2;
+		}
+		if(enemies[index].ypos < player[0].ypos) {
+			yway = 1;
+		}
+		spawnShot(xway, yway, index);				
+	}
+}
+
+void mutantMove(uint8_t index) {
+	int8_t xMover = Random()%15 + 1;
+	int8_t yMover = Random()%15 + 1;
+	if(player[0].xpos > enemies[index].xpos) {
+		xMover+=5;
+	}
+	if(player[0].xpos < enemies[index].xpos) {
+		xMover-=5;
+	}
+	if(player[0].ypos > enemies[index].ypos) {
+		yMover+=5;
+	}
+	if(player[0].ypos < enemies[index].ypos) {
+		yMover-=5;
+	}
+	if(xMover>=12) {
+		enemies[index].xpos+=2;
+	}
+	else if(xMover<=8) {
+		enemies[index].xpos-=2;
+	}
+	if(yMover>=12) {
+		enemies[index].ypos+=2;
+	}
+	else if(yMover<=8){
+		enemies[index].ypos-=2;
+	}
+	if(enemies[index].xpos < 0) {
+		enemies[index].xpos = 0;
+	}
+	if(enemies[index].xpos > 128-landerw) {
+		enemies[index].xpos = 128-landerw;
+	}
+	if(enemies[index].ypos < 20) {
+		enemies[index].ypos = 20;
+	}
+	if(enemies[index].ypos > 110-landerh) {
+		enemies[index].ypos = 110-landerh;
+	}
+	
+	if(((Random())%20+1) == 20 && fullShot == 0) {																									//the lander can decide randomly to shoot in the players general direction
+		uint8_t xway = 0;
+		uint8_t yway = 0;
 		if(enemies[index].xpos > player[0].xpos) {																										//the lander picks a direction for projectile velocity here
 			xway = 1;
 		}
@@ -193,11 +325,17 @@ void humanMove(void) {
 			else{
 				humans[0].xpos--;
 			}
+			if(humans[0].xpos < 0) {
+				humans[0].xpos = 0;
+			}
+			if(humans[0].xpos > 128) {
+				humans[0].xpos = 0;
+			}
 		}
 	}
-	if(humans[0].xpos + humans[0].width >= player[0].xpos && humans[0].xpos <= player[0].xpos + player[0].width && 
+	if(humans[0].deadimpact == 1 && humans[0].xpos + humans[0].width >= player[0].xpos && humans[0].xpos <= player[0].xpos + player[0].width && 
 		 humans[0].ypos + humans[0].height>= player[0].ypos && humans[0].ypos <= player[0].ypos + player[0].height) {
-			 Score += 50; 						// doesn't really work the way it should but when you catch the human mid-air you get some points
+			 Score += 100; 						// doesn't really work the way it should but when you catch the human mid-air you get some points
 			 humans[0].deadimpact = 0;
 	}
 }
@@ -208,7 +346,7 @@ void humanMove(void) {
 // Output: None
 void spawnShot(uint8_t x, uint8_t y, uint8_t index) {
 	uint8_t spot;
-	for(int i = 0; i < 3; i++) {
+	for(int i = 0; i < shotSize; i++) {
 		if(shots[i].override == 1) {
 			spot = i;
 		}
@@ -223,7 +361,7 @@ void spawnShot(uint8_t x, uint8_t y, uint8_t index) {
 void spawnPlayerShot() {
 	if(makeShot == 1) {
 		uint8_t spot;
-		for(int i = 0; i < 10; i++) {
+		for(int i = 0; i < laserSize; i++) {
 			if(lasers[i].override == 1) {
 				spot = i;
 			}
@@ -286,7 +424,8 @@ void movePlayerShot(uint8_t index) {
 // Input: Index position of the shot within shots[]
 // Output: None
 void checkHit(uint8_t thisShot) {
-	if(shots[thisShot].xpos >= player[0].xpos && shots[thisShot].xpos <= player[0].xpos + playerRw - 4 && shots[thisShot].ypos >= player[0].ypos && shots[thisShot].ypos <= player[0].ypos + playerRh-4) {
+	if(shots[thisShot].xpos >= player[0].xpos && shots[thisShot].xpos <= player[0].xpos + playerRw - 4 && 
+		shots[thisShot].ypos <= player[0].ypos && shots[thisShot].ypos >= player[0].ypos - playerRh) {
 		player[0].lives--;								//the player does not exist
 		shots[thisShot].override = 1;			//the shot does not exist
 	}
@@ -296,11 +435,17 @@ void checkHit(uint8_t thisShot) {
 }
 
 void checkPlayerHit(uint8_t thisShot) {
-	for(int i = 0; i < 2; i++) {
+	for(int i = 0; i < enemySize; i++) {
 		if(lasers[thisShot].xpos + 12>= enemies[i].xpos && lasers[thisShot].xpos <= enemies[i].xpos + enemies[i].width&& 
-			 lasers[thisShot].ypos + 2>= enemies[i].ypos && lasers[thisShot].ypos <= enemies[i].ypos + enemies[i].height) {
+			 lasers[thisShot].ypos - 2 <= enemies[i].ypos && lasers[thisShot].ypos >= enemies[i].ypos - enemies[i].height) {
 			enemies[i].dead = 1;
 			lasers[thisShot].override = 1;
+			if(enemies[i].type == lander) {
+				Score+=50;
+			}
+			if(enemies[i].type == mutant) {
+				Score+=100;
+			}
 			break;
 		}
 	}
@@ -313,7 +458,8 @@ void checkPlayerHit(uint8_t thisShot) {
 void enemyMove() {										//this calls all the enemies to move in their certain way
 	fullShot = 1;
 	fullLaser = 1;
-	for(int i = 0; i < 5; i++) {
+	fullEnemy = 1;
+	for(int i = 0; i < shotSize; i++) {
 		if(shots[i].override == 1) {			//fullShot is how enemies are aware if there are too many projectiles on screen
 			fullShot = 0;
 		}
@@ -322,7 +468,7 @@ void enemyMove() {										//this calls all the enemies to move in their certai
 		}
 	}
 	spawnPlayerShot();
-	for(int i = 0; i < 10; i++) {
+	for(int i = 0; i < laserSize; i++) {
 		if(lasers[i].override == 1) {			//fullShot is how enemies are aware if there are too many projectiles on screen
 			fullLaser = 0;
 		}
@@ -330,20 +476,28 @@ void enemyMove() {										//this calls all the enemies to move in their certai
 			movePlayerShot(i);
 		}
 	}
-	for(int i = 0; i < 4; i++) {
+	for(int i = 0; i < enemySize; i++) {
 		if(enemies[i].type == lander && enemies[i].dead == 0) {
 			landerMove(i);									//a non-dead enemy should move
 		}
-		if(enemies[i].dead == 1 && enemies[i].carrying == 1) {
-			humans[0].pickedup = 0;
+		if(enemies[i].type == mutant && enemies[i].dead == 0) {
+			mutantMove(i);									//a non-dead enemy should move
 		}
-		if(enemies[i].dead == 1 && changeFrame) {
-			enemies[i].dead = 2;						//now this should make them overwritable later
+		if(enemies[i].dead == 1) {
+			fullEnemy = 0;
+			if(enemies[i].carrying == 1) {
+				humans[0].pickedup = 0;
+			}
+			if(changeFrame) {
+				enemies[i].dead = 2;						//now this should make them overwritable later
+			}
 		}
 	}
 	if(humans[0].dead == 0) {
 		humanMove();											//a non-dead human should move
 	}
+	if(spawnMutants) {
+		spawnMutant();
+	}
+	spawnLander();
 }
-
-
