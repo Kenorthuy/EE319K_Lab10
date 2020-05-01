@@ -105,6 +105,7 @@ void Intro_Screen(void){
 }
 
 // ************** Language Select *****************************************
+// Show the language select screen, with options for english or spanish. Use the ADC to determine the value hovered over
 void Language_Select(void){uint32_t langADC;
 	Output_Clear();
 	ST7735_DrawBitmap(42, 60, globe, 44, 44);
@@ -152,8 +153,6 @@ void Level_One(void){
 	}
 	Level =1;
 	player[0].facingLeft = 0;
-	maxEnemiesDead = 2;
-	enemySize = 3;
 	Delay100ms(30);
 	playsound(defenderStart);
 }
@@ -163,26 +162,16 @@ void Level_One(void){
 // where we can set all of the enemy settings and timers related to the first level
 void Level_Two(void){
 	DisableInterrupts();
-	maxEnemiesDead = 3;
-	enemySize = 4;
-	if(humans[0].dead == 1) {
+	enemySize++;											//this increases the cap for enemies on screen to 4
+	if(humans[0].dead == 1) {					//if the human died in the last round, set the flag spawnMutants to allow mutants to spawn
 		spawnMutants = 1;
 	}
-	if(spawnMutants) {
-		for(int i = 1; i < enemySize; i++) {
-			creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-			enemies[i] = enemy;
-		}
-		creature_t enemy1 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-		enemies[0] = enemy1;
+	
+	for(int i = 0; i < enemySize; i++) {			//for simplicitys sake the first wave will always be initialized to landers in around the top band of the screen
+		creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+		enemies[i] = enemy;
 	}
-	else {
-		for(int i = 0; i < enemySize; i++) {
-			creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-			enemies[i] = enemy;
-		}
-	}
-	if(humans[0].dead == 0) {
+	if(humans[0].dead == 0) {									//the human, if alive, is reset
 		humans[0].deadimpact = 0;
 		humans[0].pickedup = 0;
 		humans[0].ypos = 110;
@@ -206,7 +195,6 @@ void Level_Two(void){
 	player[0].facingLeft = 0;
 	Delay100ms(30);
 	Output_Clear();
-
 	EnableInterrupts();
 	playsound(defenderStart);
 }
@@ -216,25 +204,19 @@ void Level_Two(void){
 // where we can set all of the enemy settings and timers related to the first level
 void Level_Three(void){
 	DisableInterrupts();
-	maxEnemiesDead = 4;
-	enemySize = 5;
-	if(humans[0].dead == 1) {
+	enemySize++;											//increases enemy cap to 5
+	if(spawnMutants == 1) {						//if mutants were there last round, reset the game back to normal
+		spawnMutants = 0;
+		humans[0].dead = 0;
+		humans[0].ypos = 110;
+	}
+	if(humans[0].dead == 1) {					//if the human died last round, spawn mutants
 		spawnMutants = 1;
 	}
 	
-	if(spawnMutants) {
-		for(int i = 1; i < enemySize; i++) {
-			creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-			enemies[i] = enemy;
-		}
-		creature_t enemy1 = {2, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-		enemies[0] = enemy1;
-	}
-	else {
-		for(int i = 0; i < enemySize; i++) {
-			creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
-			enemies[i] = enemy;
-		}
+	for(int i = 0; i < enemySize; i++) {
+		creature_t enemy = {1, Random()%110+1, Random()%20+10, 13, 12, 0, 0, 0, 0};
+		enemies[i] = enemy;
 	}
 	if(humans[0].dead == 0) {
 		humans[0].deadimpact = 0;
@@ -242,15 +224,15 @@ void Level_Three(void){
 		humans[0].ypos = 110;
 	}
 	Output_Clear();
-	ST7735_SetCursor(5,6);
+	ST7735_SetCursor(5,7);
 	if(Language == 1){
-		ST7735_OutString("Nivel Tres:\n      SOBREVIVE");
+		ST7735_OutString("Nivel Tres");
 		ST7735_SetCursor(6,9);
 		ST7735_OutString("Vidas:");
 		ST7735_SetCursor(13,9);
 		LCD_OutDec(player[0].lives);
 	}else{
-		ST7735_OutString("Level Three:\n     SURVIVE");
+		ST7735_OutString("Level Three");
 		ST7735_SetCursor(6,9);
 		ST7735_OutString("Lives:");
 		ST7735_SetCursor(13,9);
@@ -260,7 +242,6 @@ void Level_Three(void){
 	player[0].facingLeft = 0;
 	Delay100ms(30);
 	Output_Clear();
-
 	EnableInterrupts();
 	playsound(defenderStart);
 }
@@ -330,29 +311,29 @@ void drawCreatures() {
 		if(humans[i].dead == 0) {
 			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, humanSprite, humans[i].width, humans[i].height);
 		}
-		if(humans[i].dead == 1) {
+		if(humans[i].dead == 1) {																//if the human is dead by falling, draw a skull
 			ST7735_DrawBitmap(humans[i].xpos, humans[i].ypos, deadHumanSprite, humans[i].width, humans[i].height);
 		}
 	}
-	for(int i = 0; i < enemySize; i++) {											//only supports array maximums of two and landers
+	for(int i = 0; i < enemySize; i++) {
 		if(enemies[i].type == 1 && enemies[i].dead == 0) {		//draws landers that arent dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, landerSprite, enemies[i].width, enemies[i].height);
 		}
-		if(enemies[i].type == 1 && enemies[i].dead < maxEnemiesDead && enemies[i].dead != 0) {		//draws landers that are dead
+		if(enemies[i].type == 1 && enemies[i].dead == 1) {		//draws landers that just died
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, deadLanderSprite, enemies[i].width, enemies[i].height);
 		}
-		if(enemies[i].type == 1 && enemies[i].dead == maxEnemiesDead) {		//draws landers that are dead
+		if(enemies[i].type == 1 && enemies[i].dead == 2) {		//draws landers that died a little while ago
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, explosionSprite, enemies[i].width, enemies[i].height);
 			enemies[i].xpos = 115;
 			enemies[i].ypos = 115;
 		}
-		if(enemies[i].type == 2 && enemies[i].dead == 0) {		//draws landers that arent dead
+		if(enemies[i].type == 2 && enemies[i].dead == 0) {		//draws mutants that arent dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, mutantSprite, enemies[i].width, enemies[i].height);
 		}
-		if(enemies[i].type == 2 && enemies[i].dead == 1) {		//draws landers that are dead
+		if(enemies[i].type == 2 && enemies[i].dead == 1) {		//draws mutants that just dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, deadMutantSprite, enemies[i].width, enemies[i].height);
 		}
-		if(enemies[i].type == 2 && enemies[i].dead == 2) {		//draws landers that are dead
+		if(enemies[i].type == 2 && enemies[i].dead == 2) {		//draws mutants that died a while ago dead
 			ST7735_DrawBitmap(enemies[i].xpos, enemies[i].ypos, explosionSprite, enemies[i].width, enemies[i].height);
 			enemies[i].xpos = 115;
 			enemies[i].ypos = 115;
@@ -488,7 +469,7 @@ int main(void){
 	EnableInterrupts();
 	
   while(1){
-		if(gameDone) {
+		if(gameDone) {													//flag if the number of lives is zero
 			Game_Over();
 			ST7735_FillScreen(0x0000);            // set screen to black
 		}
