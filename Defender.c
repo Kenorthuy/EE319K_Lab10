@@ -80,6 +80,8 @@ void drawBackground(void);
 void Button_Init(void);
 void Intro_Screen(void);
 void Level_One(void);
+void Level_Two(void);
+void Level_Three(void);
 void Display_Score(void);
 void Game_Over(void);
 
@@ -148,11 +150,65 @@ void Level_One(void){
 		ST7735_SetCursor(6,9);
 		ST7735_OutString("Lives: 3");
 	}
-	ST7735_SetCursor(13,8);
-	ST7735_SetTextColor(0xFFFF);
 	Level =1;
 	player[0].facingLeft = 0;
 	Delay100ms(30);
+	playsound(defenderStart);
+}
+
+
+// ***************** Level_Two *****************************************
+// where we can set all of the enemy settings and timers related to the first level
+void Level_Two(void){
+	DisableInterrupts();
+	Output_Clear();
+	ST7735_SetCursor(6,7);
+	if(Language == 1){
+		ST7735_OutString("Nivel Dos");
+		ST7735_SetCursor(6,9);
+		ST7735_OutString("Vidas:");
+		ST7735_SetCursor(13,9);
+		LCD_OutDec(player[0].lives);
+	}else{
+		ST7735_OutString("Level Two");
+		ST7735_SetCursor(6,9);
+		ST7735_OutString("Lives:");
+		ST7735_SetCursor(13,9);
+		LCD_OutDec(player[0].lives);
+	}
+	Level = 2;
+	player[0].facingLeft = 0;
+	Delay100ms(30);
+	Output_Clear();
+	EnableInterrupts();
+	playsound(defenderStart);
+}
+
+
+// ***************** Level_Three *****************************************
+// where we can set all of the enemy settings and timers related to the first level
+void Level_Three(void){
+	DisableInterrupts();
+	Output_Clear();
+	ST7735_SetCursor(5,7);
+	if(Language == 1){
+		ST7735_OutString("Nivel Tres");
+		ST7735_SetCursor(6,9);
+		ST7735_OutString("Vidas:");
+		ST7735_SetCursor(13,9);
+		LCD_OutDec(player[0].lives);
+	}else{
+		ST7735_OutString("Level Three");
+		ST7735_SetCursor(6,9);
+		ST7735_OutString("Lives:");
+		ST7735_SetCursor(13,9);
+		LCD_OutDec(player[0].lives);
+	}
+	Level = 3;
+	player[0].facingLeft = 0;
+	Delay100ms(30);
+	Output_Clear();
+	EnableInterrupts();
 	playsound(defenderStart);
 }
 
@@ -308,6 +364,12 @@ void Display_Score(void){
 		ST7735_SetCursor(7,13);
 	}
 		LCD_OutDec(Score);
+	if(Score > 500 && Level == 1){
+		Level_Two();
+	}
+	if(Score > 1500 && Level ==2){
+		Level_Three();
+	}
 }
 
 // *************** MAIN **************************************************
