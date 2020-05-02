@@ -40,7 +40,7 @@ Timers:
   
   1 human. panics and runs around
   
-  2 enemies
+  3 enemies for level 1 and increases each level
   
   Lander:
   
