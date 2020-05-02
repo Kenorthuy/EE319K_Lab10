@@ -1,4 +1,4 @@
-// Creatures.c
+/// Creatures.c
 // Runs on any computer
 // Sound assets based off the original Space Invaders 
 // Import these constants into your SpaceInvaders.c for sounds!
@@ -156,7 +156,7 @@ void spawnMutant() {
 			if(enemies[i].dead == 2) {												//if there exists an enemy that has been dead long enough for the sprites to be "old," theyre free to be replaced
 				creature_t enemy = {mutant, Random()%110+1, Random()%20+10, landerw, landerh, 0, 0, 0, 0};
 				enemies[i] = enemy;
-				break;																					//break to not overwhelm the player with mutants unless theyre asking for it
+				//break;																					//break to not overwhelm the player with mutants unless theyre asking for it ASK FOR IT
 			}
 		}
 	}

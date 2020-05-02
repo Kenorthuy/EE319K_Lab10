@@ -84,9 +84,10 @@ void Level_Two(void);
 void Level_Three(void);
 void Display_Score(void);
 void Game_Over(void);
+void humanFail(void);
 
 uint8_t Language; // 0 is for english, 1 is for spanish
-
+uint8_t failScreen =0;
 
 
 // ************** Intro_Screen *****************************************
@@ -163,8 +164,15 @@ void Level_One(void){
 void Level_Two(void){
 	DisableInterrupts();
 	enemySize++;											//this increases the cap for enemies on screen to 4
+	failScreen =0;
 	if(humans[0].dead == 1) {					//if the human died in the last round, set the flag spawnMutants to allow mutants to spawn
 		spawnMutants = 1;
+	}
+	
+	if(spawnMutants == 1) {						//if mutants were there last round, reset the game back to normal
+		spawnMutants = 0;
+		humans[0].dead = 0;
+		humans[0].ypos = 110;
 	}
 	
 	for(int i = 0; i < enemySize; i++) {			//for simplicitys sake the first wave will always be initialized to landers in around the top band of the screen
@@ -205,6 +213,7 @@ void Level_Two(void){
 void Level_Three(void){
 	DisableInterrupts();
 	enemySize++;											//increases enemy cap to 5
+	failScreen =0;
 	if(spawnMutants == 1) {						//if mutants were there last round, reset the game back to normal
 		spawnMutants = 0;
 		humans[0].dead = 0;
@@ -224,15 +233,15 @@ void Level_Three(void){
 		humans[0].ypos = 110;
 	}
 	Output_Clear();
-	ST7735_SetCursor(5,7);
+	ST7735_SetCursor(5,6);
 	if(Language == 1){
-		ST7735_OutString("Nivel Tres");
+		ST7735_OutString("Nivel Tres:\n      SOBREVIVE");
 		ST7735_SetCursor(6,9);
 		ST7735_OutString("Vidas:");
 		ST7735_SetCursor(13,9);
 		LCD_OutDec(player[0].lives);
 	}else{
-		ST7735_OutString("Level Three");
+		ST7735_OutString("Level Three:\n     SURVIVE");
 		ST7735_SetCursor(6,9);
 		ST7735_OutString("Lives:");
 		ST7735_SetCursor(13,9);
@@ -249,7 +258,8 @@ void Level_Three(void){
 // ***************** Game_Over *************************************
 // shows that the game is over and then displays the player's score
 void Game_Over(void){
-	GPIO_PORTE_DIR_R |= 0x7; 
+	GPIO_PORTE_DIR_R |= 0x7;
+	GPIO_PORTE_DATA_R = 0x0;
 	playsound(scoreTable);
 	ST7735_FillScreen(0x0000);            // set screen to black
 
@@ -266,9 +276,32 @@ void Game_Over(void){
 		ST7735_OutString("SCORE:");
 		ST7735_SetCursor(12,7);
 	}
+	Delay100ms(30);
 	LCD_OutDec(Score);
 	while(1);
 }
+
+// ***************humanFail*************************
+// when the player fails to save the human, the game refreshes while a screen pops up to allow mutants to spawn
+
+void humanFail(void){
+	Output_Clear();
+	DisableInterrupts();
+	if(Language == 1){
+		ST7735_SetCursor(1,6);
+		ST7735_OutString("No pudiste proteger\n  -=      al humano...");
+		
+	}else{
+		ST7735_SetCursor(3,6);
+		ST7735_OutString("You failed to\n    protect the\n      human...");
+	}
+	Delay100ms(30);
+	Output_Clear();
+	EnableInterrupts();
+	spawnMutants =1;										//enables mutant spawning within the same level
+	failScreen = 1;											// sets a flag to disable the ability for this screen to pop up again until the next level
+}
+
 
 // *************** Button_Init **********************************************
 void Button_Init(void){
@@ -479,8 +512,10 @@ int main(void){
 			drawBackground();											//re-render background
 			drawCreatures();											//use updated coordinates to draw creatures
 			Display_Score();
+			if((humans[0].dead) && failScreen !=1){
+				humanFail();
+			}
 		}
   }
 }
-
 
